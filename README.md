@@ -1,8 +1,8 @@
 # WorkForce IQ 🧠
 
-> **An Intelligent Rule-Based Skill-Fit Allocation System for Agile Project Management**
+> **Intelligent Skill-Fit Allocation for Modern Teams**
 
-WorkForce IQ replaces intuition-driven sprint planning with a probabilistic scoring engine that computes the best team member for every task — in real time, with a plain-English reason for every recommendation.
+WorkForce IQ replaces gut-feel sprint planning with a probabilistic scoring engine that ranks every team member against every task in real time — with a plain-English reason for every recommendation.
 
 ![Board View](public/screenshots/Board%20view%20.jpeg)
 
@@ -10,7 +10,7 @@ WorkForce IQ replaces intuition-driven sprint planning with a probabilistic scor
 
 ## 🎯 The Problem
 
-Existing tools like Jira, Linear, and Monday.com have an assignee dropdown. That's it. Who gets assigned is based on gut feel, availability, and familiarity — not skill fit, workload capacity, or historical performance. The result: skill mismatches, blocked tasks, burnout, and sprint failures.
+Jira, Linear, and Monday.com give you an assignee dropdown. That's it. Who gets the work is decided by familiarity, availability, and instinct — not skill fit, workload capacity, or proven performance. The result: wrong people on wrong tasks, blocked sprints, and burnout.
 
 ## 💡 The Solution
 
@@ -22,13 +22,13 @@ Fit% = round( (min(5, Skill + CompletionBoost) / 5) × Complexity × Effort × W
 
 | Variable | Description |
 |---|---|
-| **Skill Score** | 1–5 rating per skill type from the team's skill matrix |
-| **Completion Boost** | +0.2 per completed task of matching type (capped at 5) |
-| **Complexity Multiplier** | Low=1.00, Medium=0.90, High=0.75, Critical=0.60 |
-| **Effort Penalty** | 1–3pts=1.00, 5pts=0.95, 8pts=0.88, 13pts=0.78 |
-| **Workload Factor** | >90%=0.60, >75%=0.80, >60%=0.92, else=1.00 |
+| **Skill Score** | 1–5 rating per skill type from the team skill matrix |
+| **Completion Boost** | +0.2 per completed task of matching type — system gets smarter over time |
+| **Complexity Multiplier** | Low=1.00 · Medium=0.90 · High=0.75 · Critical=0.60 |
+| **Effort Penalty** | 1–3pts=1.00 · 5pts=0.95 · 8pts=0.88 · 13pts=0.78 |
+| **Workload Factor** | >90%=0.60 · >75%=0.80 · >60%=0.92 · else=1.00 |
 
-Every recommendation comes with a risk classification (Low / Medium / High / Critical) and a plain-English reason — fully explainable, fully auditable.
+Every recommendation includes a risk classification (Low / Medium / High / Critical) and a plain-English justification — explainable, auditable, and trustworthy.
 
 ---
 
@@ -37,10 +37,10 @@ Every recommendation comes with a risk classification (Low / Medium / High / Cri
 ### Sign In
 ![Sign In](public/screenshots/Log%20in%20Page.png)
 
-### Workspace Setup
+### Workspace Setup & Template Selection
 ![Setup](public/screenshots/Setup%20work%20station.jpeg)
 
-### Board — Swim Lane View
+### Board — Team Swim Lane View
 ![Board](public/screenshots/Board%20view%20.jpeg)
 
 ### Task Drawer — Ranked Assignment Suggestions
@@ -49,7 +49,7 @@ Every recommendation comes with a risk classification (Low / Medium / High / Cri
 ### Skill Matrix
 ![Skill Matrix](public/screenshots/skill%20Matrix.jpeg)
 
-### Team View
+### Team Profiles
 ![Team](public/screenshots/team%20view.jpeg)
 
 ### Risk Register
@@ -59,15 +59,15 @@ Every recommendation comes with a risk classification (Low / Medium / High / Cri
 
 ## ✨ Features
 
-- **Swim Lane Board** — each row is a developer, columns are task statuses. Workload visible at a glance
-- **Ranked Assignment Suggestions** — every candidate scored and ranked with skill, load, completions and reason
-- **Completion History Boost** — skill scores update dynamically as tasks are completed, improving recommendations over time
-- **What's Next** — suggests logical follow-on tasks based on proven completion history
-- **Risk Register** — auto-calculated risk per task and per member, with composite member risk scores
-- **Skill Matrix** — upload from Excel/CSV or build manually, with percentile rankings across the team
-- **Multi-Template Support** — Software Dev, Marketing, Creative Agency, Sales, Construction, Custom
-- **Full Auth & Onboarding** — sign up, workspace creation, template selection, account types
-- **Real-time Sync** — Supabase backend with live updates across team members
+- **Swim Lane Board** — each row is a team member, columns are task statuses. Workload visible at a glance
+- **Ranked Assignment Engine** — every candidate scored and ranked with skill level, workload, completion history, and a plain-English reason
+- **Completion Boost** — skill scores update dynamically as tasks are completed, making recommendations more accurate over time
+- **What's Next** — suggests logical follow-on tasks based on proven completion history per member
+- **Risk Register** — auto-calculated risk per task and per member with composite risk scoring
+- **Skill Matrix** — upload from Excel/CSV or build manually with percentile rankings across the team
+- **Multi-Template Architecture** — Software Dev, Marketing, Creative Agency, Sales, Construction, Custom — same engine, different skill vocabularies
+- **Full Auth & Onboarding** — sign up, profile creation, workspace setup, template selection, account types (Solo / Team / Company)
+- **Real-time Backend** — Supabase PostgreSQL with live sync
 
 ---
 
@@ -76,10 +76,10 @@ Every recommendation comes with a risk classification (Low / Medium / High / Cri
 | Layer | Technology |
 |---|---|
 | Frontend | React 18 + Vite |
-| Styling | Custom design system (inline tokens) |
-| Backend | Supabase (PostgreSQL + Auth) |
+| Design System | Custom token-based inline styling |
+| Backend | Supabase (PostgreSQL + Auth + Real-time) |
 | Algorithm | Deterministic rule-based scoring engine |
-| Deployment | Vercel (frontend) + Supabase (backend) |
+| Deployment | Vercel + Supabase |
 
 ---
 
@@ -87,7 +87,7 @@ Every recommendation comes with a risk classification (Low / Medium / High / Cri
 
 ### Prerequisites
 - Node.js 18+
-- A Supabase project ([supabase.com](https://supabase.com))
+- Supabase project — [supabase.com](https://supabase.com)
 
 ### Installation
 
@@ -97,7 +97,7 @@ cd Workforce-iq
 npm install
 ```
 
-### Environment Setup
+### Environment
 
 Create a `.env` file in the project root:
 
@@ -118,41 +118,32 @@ Open [http://localhost:5173](http://localhost:5173)
 
 ## 🧮 Algorithm — Worked Example
 
-**Scenario:** Alice (Frontend skill 4/5, 2 completed Frontend tasks, 72% workload) evaluated for a High complexity, 5-point Frontend task.
+**Alice** · Frontend 4/5 · 2 completed Frontend tasks · 72% workload  
+**Task** · Frontend · High complexity · 5 story points
 
 ```
-Skill = 4,  Boost = 2 × 0.2 = 0.4,  Effective = min(5, 4.4) = 4.4
-Complexity = 0.75,  Effort = 0.95,  Workload = 0.92
-
+Effective Skill = min(5, 4 + 2×0.2) = 4.4
 Fit% = round( (4.4/5) × 0.75 × 0.95 × 0.92 × 100 ) = 58% → Medium Risk
 ```
 
-**Recommendation displayed:** *"Alice has completed 2 Frontend tasks — proven fit. 4/5 skill · 72% load (moderate) · 58% fit"*
-
----
-
-## 📚 Academic Context
-
-WorkForce IQ was developed as the primary artefact for an MSc dissertation in IT Project Management, using **Design Science Research (DSR)** methodology. The scoring algorithm represents an original contribution to the field of skill-aware resource allocation in agile project management.
-
-**Research Question:** *To what extent can a rule-based skill-fit scoring algorithm improve task allocation decisions in agile project management teams?*
+**Displayed as:** *"Alice has completed 2 Frontend tasks — proven fit. 4/5 skill · 72% load · 58% fit"*
 
 ---
 
 ## 🗺 Roadmap
 
-- [ ] GitHub integration — auto-close tasks when PR merges
-- [ ] Slack daily digest — team health score notification
-- [ ] Sprint planning copilot — AI-guided optimal sprint composition
-- [ ] Longitudinal skill validation — infer skill accuracy from completion patterns
+- [ ] GitHub integration — auto-close tasks on PR merge
+- [ ] Slack digest — daily team health score
+- [ ] Sprint planning copilot — optimal sprint composition engine
+- [ ] Predictive risk — delivery forecasting across sprints
 - [ ] Enterprise multi-team workspaces
 
 ---
 
 ## 👤 Author
 
-**Samuel Adebusoye**
-MSc IT Project Management
+**Samuel Adebusoye**  
+Full Stack Developer · Product Builder
 
 [![GitHub](https://img.shields.io/badge/GitHub-yxclearns33-181717?style=flat&logo=github)](https://github.com/yxclearns33)
 
@@ -160,4 +151,5 @@ MSc IT Project Management
 
 ## 📄 Licence
 
-MIT — free to use, modify and distribute with attribution.
+Copyright © 2026 Samuel Adebusoye. All rights reserved.  
+This source code is shared for portfolio and demonstration purposes only. Commercial use, copying, or distribution without explicit written consent from the author is strictly prohibited.
