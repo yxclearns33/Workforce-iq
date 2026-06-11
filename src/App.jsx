@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "./supabase";
 
 /* ═══════════ DESIGN TOKENS ═══════════ */
 const J={
@@ -866,11 +867,13 @@ function ExcelPreviewModal({parsed,onApply,onClose}){
 }
 
 /* ═══════════ MAIN APP ═══════════ */
-export default function App(){
-  const [tasks,   sTasks]  =useState(SEED_TASKS);
-  const [members, sMembers]=useState(SEED_MEMBERS);
-  const [sprints, sSprints]=useState(SEED_SPRINTS);
-  const [skillCols,sSkillCols]=useState(DEF_SKILLS);
+export default function App({template,workspace,user,onSignOut}){
+  const [tasks,   sTasks]  =useState([]);
+  const [members, sMembers]=useState([]);
+  const [sprints, sSprints]=useState([]);
+  const [skillCols,sSkillCols]=useState(template?.skills||DEF_SKILLS);
+  const [wsId,sWsId]=useState(null);
+  const [loading,sLoading]=useState(true);
   const [tab,     sTab]    =useState("board");
   const [aiModal, sAiModal]=useState(null);
   const [selTask, sSelTask]=useState(null);
@@ -890,6 +893,53 @@ export default function App(){
   const [sbStatus,setSbStatus]=useState("");
   const [showSb,setShowSb]=useState(false);
   const importRef=useRef();
+
+  /* ═══════ SUPABASE LOAD ═══════ */
+  useEffect(()=>{
+    if(!user)return;
+    const init=async()=>{
+      sLoading(true);
+      let{data:ws}=await supabase.from("workspaces").select("*").eq("owner_id",user.id).single();
+      if(!ws){
+        const{data:newWs}=await supabase.from("workspaces").insert({
+          name:workspace||"My Workspace",
+          owner_id:user.id,
+          template:template?.id||"software",
+          skill_cols:template?.skills||DEF_SKILLS,
+        }).select().single();
+        ws=newWs;
+      }
+      if(!ws){sLoading(false);return;}
+      sWsId(ws.id);
+      sSkillCols(ws.skill_cols||template?.skills||DEF_SKILLS);
+      const{data:dbMembers}=await supabase.from("members").select("*").eq("workspace_id",ws.id);
+      if(dbMembers?.length){
+        sMembers(dbMembers.map(m=>({...m,skills:m.skills||{}})));
+      } else {
+        const seeded=SEED_MEMBERS.map(m=>({...m,workspace_id:ws.id}));
+        const{data:ins}=await supabase.from("members").insert(seeded).select();
+        if(ins)sMembers(ins.map(m=>({...m,skills:m.skills||{}})));
+      }
+      const{data:dbSprints}=await supabase.from("sprints").select("*").eq("workspace_id",ws.id);
+      if(dbSprints?.length){
+        sSprints(dbSprints);
+      } else {
+        const seeded=SEED_SPRINTS.map(s=>({...s,workspace_id:ws.id}));
+        const{data:ins}=await supabase.from("sprints").insert(seeded).select();
+        if(ins)sSprints(ins);
+      }
+      const{data:dbTasks}=await supabase.from("tasks").select("*").eq("workspace_id",ws.id);
+      if(dbTasks?.length){
+        sTasks(dbTasks.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override})));
+      } else {
+        const seeded=SEED_TASKS.map(t=>({...t,workspace_id:ws.id,assignee_id:t.assigneeId,risk_override:t.riskOverride}));
+        const{data:ins}=await supabase.from("tasks").insert(seeded).select();
+        if(ins)sTasks(ins.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override})));
+      }
+      sLoading(false);
+    };
+    init();
+  },[user]);
   const taskRef=useRef();
 
   /* Banner */
@@ -907,8 +957,17 @@ export default function App(){
   useEffect(()=>{refreshBanner();},[]);
 
   /* CRUD */
-  const upTask   =(id,p)=>sTasks(ts=>ts.map(t=>t.id===id?{...t,...p}:t));
-  const upMember =(id,p)=>sMembers(ms=>ms.map(m=>m.id===id?{...m,...p}:m));
+  const upTask=(id,p)=>{
+    sTasks(ts=>ts.map(t=>t.id===id?{...t,...p}:t));
+    const dbP={...p};
+    if(p.assigneeId!==undefined)dbP.assignee_id=p.assigneeId;
+    if(p.riskOverride!==undefined)dbP.risk_override=p.riskOverride;
+    supabase.from("tasks").update(dbP).eq("id",id).then(()=>{});
+  };
+  const upMember=(id,p)=>{
+    sMembers(ms=>ms.map(m=>m.id===id?{...m,...p}:m));
+    supabase.from("members").update(p).eq("id",id).then(()=>{});
+  };
   const delTask  =(id)=>sTasks(ts=>ts.filter(t=>t.id!==id));
   const delMember=(id)=>{sMembers(ms=>ms.filter(m=>m.id!==id));sTasks(ts=>ts.map(t=>t.assigneeId===id?{...t,assigneeId:null}:t));sSelMem(null);};
   const addTask  =(spId)=>sTasks(ts=>[...ts,{id:"t"+Date.now(),name:"New issue",type:skillCols[0]||"Frontend",complexity:"Medium",priority:"Medium",effort:3,sprint:spId||sprints[1]?.id||sprints[0]?.id||"s1",status:"Todo",assigneeId:null,riskOverride:null}]);
@@ -1683,6 +1742,19 @@ export default function App(){
   };
 
   /* ═══════ RENDER ═══════ */
+  if(loading)return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:J.bg,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"}}>
+      <div style={{textAlign:"center"}}>
+        <div style={{width:"36px",height:"36px",background:J.side,borderRadius:"9px",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}>
+          <span style={{color:"#fff",fontWeight:700,fontSize:"16px"}}>W</span>
+        </div>
+        <style>{"@keyframes sp{to{transform:rotate(360deg)}}"}</style>
+        <div style={{width:"20px",height:"20px",borderRadius:"50%",border:`2px solid ${J.blue}`,borderTopColor:"transparent",animation:"sp .8s linear infinite",margin:"0 auto 8px"}}/>
+        <div style={{fontSize:"13px",color:J.t2}}>Loading your workspace…</div>
+      </div>
+    </div>
+  );
+
   return(
     <div style={{display:"flex",minHeight:"100vh",background:J.bg,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif",fontSize:"13px"}}>
 
@@ -1770,6 +1842,16 @@ export default function App(){
 
         <div style={{padding:"10px 14px",borderTop:"1px solid rgba(255,255,255,.07)"}}>
           <div style={{fontSize:"9px",color:"rgba(255,255,255,.2)",textAlign:"center",letterSpacing:"0.05em"}}>WorkForce IQ · AI-Powered</div>
+        </div>
+        <div style={{padding:"8px 10px",borderTop:"1px solid rgba(255,255,255,.07)"}}>
+          <button onClick={onSignOut}
+            style={{width:"100%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",
+              color:"rgba(255,255,255,.5)",borderRadius:J.r,padding:"6px",cursor:"pointer",
+              fontSize:"11px",fontWeight:500,fontFamily:"inherit",transition:"background .15s"}}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.12)"}
+            onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.06)"}>
+            Sign out
+          </button>
         </div>
       </aside>
 
