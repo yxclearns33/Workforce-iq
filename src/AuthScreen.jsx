@@ -165,15 +165,25 @@ export default function AuthScreen({onAuth, onBack}){
   };
 
   const handleSignIn=async()=>{
-    if(!validate())return;
-    setLoading(true);setError("");
-    const{error:e}=await supabase.auth.signInWithPassword({email,password});
-    if(e){setError(e.message);setLoading(false);}
-    else{
-  setLoading(false);
-  setMode("workspace");
-}
-  };
+  if(!validate())return;
+  setLoading(true);setError("");
+  const{error:e}=await supabase.auth.signInWithPassword({email,password});
+  if(e){setError(e.message);setLoading(false);return;}
+  const{data:{user}}=await supabase.auth.getUser();
+  // check if workspace already exists
+  const{data:ws}=await supabase.from("workspaces").select("*").eq("owner_id",user.id).single();
+  if(ws){
+    // returning user — load their template and go straight to app
+    const{TEMPLATES}=await import("./templates");
+    const tpl=TEMPLATES.find(t=>t.id===ws.template)||TEMPLATES[0];
+    tpl.skills=ws.skill_cols||tpl.skills;
+    onAuth(user,tpl,ws.name);
+  } else {
+    // new user — show workspace setup
+    setLoading(false);
+    setMode("workspace");
+  }
+};
 
   const handleSignUp=async()=>{
     if(!validate())return;
