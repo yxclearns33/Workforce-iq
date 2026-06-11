@@ -2,22 +2,32 @@ import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import AuthScreen from './AuthScreen.jsx'
+import LandingPage from './LandingPage.jsx'
 import { supabase } from './supabase.js'
 import './index.css'
 
 function Root(){
-  const [user,setUser]=useState(null);
-  const [template,setTemplate]=useState(null);
-  const [workspace,setWorkspace]=useState("");
-  const [checking,setChecking]=useState(true);
+  const [user,      setUser]      = useState(null);
+  const [template,  setTemplate]  = useState(null);
+  const [workspace, setWorkspace] = useState("");
+  const [checking,  setChecking]  = useState(true);
+  const [page,      setPage]      = useState("landing"); // landing | auth | app
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{
-      if(session?.user)setUser(session.user);
+      if(session?.user){
+        setUser(session.user);
+        setPage("app");
+      }
       setChecking(false);
     });
     const{data:{subscription}}=supabase.auth.onAuthStateChange((_,session)=>{
-      setUser(session?.user||null);
+      if(session?.user){
+        setUser(session.user);
+      } else {
+        setUser(null);
+        setPage("landing");
+      }
     });
     return()=>subscription.unsubscribe();
   },[]);
@@ -26,6 +36,14 @@ function Root(){
     setUser(u);
     setTemplate(tpl);
     setWorkspace(wsName||"My Workspace");
+    setPage("app");
+  };
+
+  const handleSignOut=async()=>{
+    await supabase.auth.signOut();
+    setUser(null);
+    setTemplate(null);
+    setPage("landing");
   };
 
   if(checking)return(
@@ -41,20 +59,23 @@ function Root(){
     </div>
   );
 
-  if(!user||!template)return(
-    <AuthScreen onAuth={handleAuth}/>
+  if(page==="landing")return(
+    <LandingPage
+      onGetStarted={()=>setPage("auth")}
+      onSignIn={()=>setPage("auth")}
+    />
   );
+
+  if(page==="auth"||!user||!template)return(
+  <AuthScreen onAuth={handleAuth} onBack={()=>setPage("landing")}/>
+);
 
   return(
     <App
       template={template}
       workspace={workspace}
       user={user}
-      onSignOut={async()=>{
-        await supabase.auth.signOut();
-        setUser(null);
-        setTemplate(null);
-      }}
+      onSignOut={handleSignOut}
     />
   );
 }

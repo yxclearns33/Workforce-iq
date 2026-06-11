@@ -146,7 +146,7 @@ function ErrBox({msg}){
 }
 
 /* ═══════════ AUTH SCREEN ═══════════ */
-export default function AuthScreen({onAuth}){
+export default function AuthScreen({onAuth, onBack}){
   const [mode,setMode]=useState("signin");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
@@ -219,8 +219,16 @@ export default function AuthScreen({onAuth}){
   );
 
   /* ── SIGN IN ── */
-  if(mode==="signin") return(
-    <Card title="Welcome back" sub="Sign in to your workspace">
+ if(mode==="signin") return(
+  <Card title="Welcome back" sub="Sign in to your workspace">
+    <div style={{marginBottom:"16px"}}>
+      <button onClick={onBack}
+        style={{background:"none",border:"none",color:J.t2,cursor:"pointer",
+          fontSize:"13px",fontFamily:"inherit",display:"flex",alignItems:"center",gap:"4px"}}>
+        ← Back to home
+      </button>
+    </div>
+      
       {success&&(
         <div style={{background:"#F0FDF4",border:"1px solid #A7F3D0",borderRadius:J.r,
           padding:"10px 13px",marginBottom:"14px",fontSize:"12px",color:"#065F46"}}>
@@ -233,9 +241,14 @@ export default function AuthScreen({onAuth}){
       <Inp label="Password" type="password" value={password}
         onChange={v=>{setPassword(v);setError("");}} placeholder="••••••••"/>
       <Btn onClick={handleSignIn} loading={loading}>Sign in</Btn>
-      <div style={{textAlign:"center",marginTop:"16px",fontSize:"13px",color:J.t2}}>
-        No account? {switchLink("Create one","signup")}
-      </div>
+      <div style={{textAlign:"center",marginBottom:"12px"}}>
+  <button onClick={()=>window.history.back()}
+    style={{background:"none",border:"none",color:J.t2,cursor:"pointer",
+      fontSize:"13px",fontFamily:"inherit",display:"flex",alignItems:"center",
+      gap:"4px",margin:"0 auto"}}>
+    ← Back to home
+  </button>
+</div>
     </Card>
   );
 
