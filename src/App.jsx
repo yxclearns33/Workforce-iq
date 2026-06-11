@@ -1829,15 +1829,7 @@ export default function App({template,workspace,user,onSignOut}){
           })}
           {members.length===0&&<div style={{fontSize:"11px",color:"rgba(255,255,255,.25)",padding:"5px 10px",fontStyle:"italic"}}>Upload Excel ↑ to add team</div>}
 
-          <div style={{marginTop:"10px",padding:"0 2px"}}>
-            <button onClick={()=>setShowSb(true)}
-              style={{width:"100%",background:sbOn?"rgba(16,185,129,.2)":"rgba(255,255,255,.05)",border:`1px solid ${sbOn?"rgba(16,185,129,.4)":"rgba(255,255,255,.1)"}`,
-                color:sbOn?"#6EE7B7":"rgba(255,255,255,.5)",borderRadius:"7px",padding:"7px 10px",cursor:"pointer",fontSize:"11px",fontWeight:500,fontFamily:"inherit",textAlign:"left",transition:"all .15s"}}
-              onMouseEnter={e=>e.currentTarget.style.background=sbOn?"rgba(16,185,129,.3)":"rgba(255,255,255,.1)"}
-              onMouseLeave={e=>e.currentTarget.style.background=sbOn?"rgba(16,185,129,.2)":"rgba(255,255,255,.05)"}>
-              🔌 {sbOn?"Supabase: On":"Connect Supabase"}
-            </button>
-          </div>
+         
         </nav>
 
         <div style={{padding:"10px 14px",borderTop:"1px solid rgba(255,255,255,.07)"}}>
