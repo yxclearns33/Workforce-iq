@@ -899,7 +899,8 @@ export default function App({template,workspace,user,onSignOut}){
     if(!user)return;
     const init=async()=>{
       sLoading(true);
-      let{data:ws}=await supabase.from("workspaces").select("*").eq("owner_id",user.id).single();
+      const{data:wsArr}=await supabase.from("workspaces").select("*").eq("owner_id",user.id).limit(1);
+      let ws=wsArr?.[0]||null;
       if(!ws){
         const{data:newWs}=await supabase.from("workspaces").insert({
           name:workspace||"My Workspace",
@@ -916,23 +917,34 @@ export default function App({template,workspace,user,onSignOut}){
       if(dbMembers?.length){
         sMembers(dbMembers.map(m=>({...m,skills:m.skills||{}})));
       } else {
-        const seeded=SEED_MEMBERS.map(m=>({...m,workspace_id:ws.id}));
+        const seeded=SEED_MEMBERS.map(m=>({
+          name:m.name,role:m.role,color:m.color,
+          workload:m.workload,skills:m.skills,workspace_id:ws.id
+        }));
         const{data:ins}=await supabase.from("members").insert(seeded).select();
         if(ins)sMembers(ins.map(m=>({...m,skills:m.skills||{}})));
       }
       const{data:dbSprints}=await supabase.from("sprints").select("*").eq("workspace_id",ws.id);
       if(dbSprints?.length){
-        sSprints(dbSprints);
+        sSprints(dbSprints.map(s=>({...s,start:s.start_date,end:s.end_date})));
       } else {
-        const seeded=SEED_SPRINTS.map(s=>({...s,workspace_id:ws.id}));
+        const seeded=SEED_SPRINTS.map(s=>({
+          name:s.name,status:s.status,
+          start_date:s.start,end_date:s.end,workspace_id:ws.id
+        }));
         const{data:ins}=await supabase.from("sprints").insert(seeded).select();
-        if(ins)sSprints(ins);
+        if(ins)sSprints(ins.map(s=>({...s,start:s.start_date,end:s.end_date})));
       }
       const{data:dbTasks}=await supabase.from("tasks").select("*").eq("workspace_id",ws.id);
       if(dbTasks?.length){
         sTasks(dbTasks.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override})));
       } else {
-        const seeded=SEED_TASKS.map(t=>({...t,workspace_id:ws.id,assignee_id:t.assigneeId,risk_override:t.riskOverride}));
+        const seeded=SEED_TASKS.map(t=>({
+          name:t.name,type:t.type,complexity:t.complexity,
+          priority:t.priority,effort:t.effort,status:t.status,
+          assignee_id:t.assigneeId,risk_override:t.riskOverride,
+          workspace_id:ws.id,sprint_id:null
+        }));
         const{data:ins}=await supabase.from("tasks").insert(seeded).select();
         if(ins)sTasks(ins.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override})));
       }
@@ -968,12 +980,36 @@ export default function App({template,workspace,user,onSignOut}){
     sMembers(ms=>ms.map(m=>m.id===id?{...m,...p}:m));
     supabase.from("members").update(p).eq("id",id).then(()=>{});
   };
-  const delTask  =(id)=>sTasks(ts=>ts.filter(t=>t.id!==id));
-  const delMember=(id)=>{sMembers(ms=>ms.filter(m=>m.id!==id));sTasks(ts=>ts.map(t=>t.assigneeId===id?{...t,assigneeId:null}:t));sSelMem(null);};
-  const addTask  =(spId)=>sTasks(ts=>[...ts,{id:"t"+Date.now(),name:"New issue",type:skillCols[0]||"Frontend",complexity:"Medium",priority:"Medium",effort:3,sprint:spId||sprints[1]?.id||sprints[0]?.id||"s1",status:"Todo",assigneeId:null,riskOverride:null}]);
-  const addSprint=()=>{const id="s"+Date.now();sSprints(ss=>[...ss,{id,name:"New Sprint",start:"",end:"",status:"Planned"}]);return id;};
-  const delSprint=(id)=>{sSprints(ss=>ss.filter(s=>s.id!==id));sTasks(ts=>ts.filter(t=>t.sprint!==id));};
-  const addMember=()=>sMembers(ms=>[...ms,{id:"m"+Date.now(),name:"New Member",role:"Developer",color:AC[ms.length%AC.length],workload:50,skills:Object.fromEntries(skillCols.map(c=>[c,1]))}]);
+  const delTask=(id)=>{sTasks(ts=>ts.filter(t=>t.id!==id));supabase.from("tasks").delete().eq("id",id).then(()=>{});};
+  const delMember=(id)=>{
+    sMembers(ms=>ms.filter(m=>m.id!==id));
+    sTasks(ts=>ts.map(t=>t.assigneeId===id?{...t,assigneeId:null}:t));
+    supabase.from("members").delete().eq("id",id).then(()=>{});
+    sSelMem(null);
+  };
+  const addTask=async(spId)=>{
+    const sprintId=spId||sprints[1]?.id||sprints[0]?.id||null;
+    const newTask={name:"New issue",type:skillCols[0]||"Frontend",complexity:"Medium",
+      priority:"Medium",effort:3,status:"Todo",assignee_id:null,risk_override:null,
+      workspace_id:wsId,sprint_id:sprintId};
+    const{data:ins}=await supabase.from("tasks").insert(newTask).select().single();
+    if(ins)sTasks(ts=>[...ts,{...ins,assigneeId:ins.assignee_id,riskOverride:ins.risk_override,sprint:ins.sprint_id}]);
+  };
+  const addSprint=async()=>{
+    const{data:ins}=await supabase.from("sprints").insert({name:"New Sprint",status:"Planned",workspace_id:wsId}).select().single();
+    if(ins){sSprints(ss=>[...ss,{...ins,start:ins.start_date,end:ins.end_date}]);return ins.id;}
+  };
+  const delSprint=(id)=>{
+    sSprints(ss=>ss.filter(s=>s.id!==id));
+    sTasks(ts=>ts.filter(t=>t.sprint!==id));
+    supabase.from("sprints").delete().eq("id",id).then(()=>{});
+  };
+  const addMember=async()=>{
+    const newMember={name:"New Member",role:"Developer",color:AC[members.length%AC.length],
+      workload:50,skills:Object.fromEntries(skillCols.map(c=>[c,1])),workspace_id:wsId};
+    const{data:ins}=await supabase.from("members").insert(newMember).select().single();
+    if(ins)sMembers(ms=>[...ms,ins]);
+  };
 
   /* File parse */
   const parseFile=(file,cb)=>{
@@ -1829,7 +1865,15 @@ export default function App({template,workspace,user,onSignOut}){
           })}
           {members.length===0&&<div style={{fontSize:"11px",color:"rgba(255,255,255,.25)",padding:"5px 10px",fontStyle:"italic"}}>Upload Excel ↑ to add team</div>}
 
-         
+          <div style={{marginTop:"10px",padding:"0 2px"}}>
+            <button onClick={()=>setShowSb(true)}
+              style={{width:"100%",background:sbOn?"rgba(16,185,129,.2)":"rgba(255,255,255,.05)",border:`1px solid ${sbOn?"rgba(16,185,129,.4)":"rgba(255,255,255,.1)"}`,
+                color:sbOn?"#6EE7B7":"rgba(255,255,255,.5)",borderRadius:"7px",padding:"7px 10px",cursor:"pointer",fontSize:"11px",fontWeight:500,fontFamily:"inherit",textAlign:"left",transition:"all .15s"}}
+              onMouseEnter={e=>e.currentTarget.style.background=sbOn?"rgba(16,185,129,.3)":"rgba(255,255,255,.1)"}
+              onMouseLeave={e=>e.currentTarget.style.background=sbOn?"rgba(16,185,129,.2)":"rgba(255,255,255,.05)"}>
+              🔌 {sbOn?"Supabase: On":"Connect Supabase"}
+            </button>
+          </div>
         </nav>
 
         <div style={{padding:"10px 14px",borderTop:"1px solid rgba(255,255,255,.07)"}}>

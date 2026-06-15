@@ -20,6 +20,8 @@ function Nav({onSignIn,onGetStarted}){
           <span style={{color:"#fff",fontWeight:700,fontSize:"16px"}}>W</span>
         </div>
         <span style={{fontSize:"15px",fontWeight:600,color:S.grey900}}>WorkForce IQ</span>
+        <span style={{fontSize:"11px",fontWeight:600,background:"#F0FDF4",color:"#166534",
+          border:"1px solid #A7F3D0",borderRadius:"999px",padding:"2px 10px"}}>Free</span>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
         <button onClick={onSignIn}
@@ -32,7 +34,7 @@ function Nav({onSignIn,onGetStarted}){
         <button onClick={onGetStarted}
           style={{background:S.indigo,color:"#fff",border:"none",borderRadius:"8px",
             padding:"8px 18px",fontSize:"13px",fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
-          Join the beta
+          Get started free
         </button>
       </div>
     </nav>
@@ -52,7 +54,7 @@ function Hero({onGetStarted,onSignIn}){
         fontSize:"12px",fontWeight:500,marginBottom:"28px",letterSpacing:"0.04em",textTransform:"uppercase"}}>
         <div style={{width:"6px",height:"6px",borderRadius:"50%",background:"#818CF8",
           animation:"pulse 2s infinite"}}/>
-        Beta — now open
+        Open beta · Always free
       </div>
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
       <h1 style={{fontSize:"clamp(36px,6vw,72px)",fontWeight:700,color:"#fff",lineHeight:1.1,
@@ -62,15 +64,20 @@ function Hero({onGetStarted,onSignIn}){
       </h1>
       <p style={{fontSize:"clamp(16px,2vw,20px)",color:"rgba(255,255,255,0.65)",
         maxWidth:"560px",margin:"0 auto 48px",lineHeight:1.7}}>
-        WorkForce IQ ranks every team member against every task — using skill, workload, and completion history — and tells you exactly who should do it and why.
+        WorkForce IQ ranks every team member against every task — using skill, workload, and completion history — and tells you exactly who should do it and why. Free forever.
       </p>
       <button onClick={onGetStarted}
         style={{background:S.indigo,color:"#fff",border:"none",borderRadius:"10px",
           padding:"14px 32px",fontSize:"15px",fontWeight:600,cursor:"pointer",
           fontFamily:"inherit",marginBottom:"12px"}}>
-        Try WorkForce IQ free →
+        Get started free →
       </button>
-      <p style={{fontSize:"12px",color:"rgba(255,255,255,0.35)",marginBottom:"8px"}}>No credit card. Free beta access.</p>
+      <div style={{display:"inline-flex",alignItems:"center",gap:"6px",
+        background:"rgba(5,150,105,0.15)",border:"1px solid rgba(5,150,105,0.3)",
+        color:"#6EE7B7",borderRadius:"999px",padding:"4px 14px",
+        fontSize:"12px",fontWeight:500,marginBottom:"10px"}}>
+        ✓ Free forever · No ads · No donations · No hidden costs
+      </div>
       <p style={{fontSize:"13px",color:"rgba(255,255,255,0.5)"}}>
         Already have an account?{" "}
         <button onClick={onSignIn} style={{background:"none",border:"none",color:"#818CF8",
@@ -297,25 +304,44 @@ function Templates(){
   );
 }
 
+function FreeCommitment(){
+  return(
+    <section style={{background:"#F0FDF4",borderTop:"1px solid #A7F3D0",borderBottom:"1px solid #A7F3D0",padding:"48px 5%",textAlign:"center"}}>
+      <h3 style={{fontSize:"22px",fontWeight:600,color:"#065F46",marginBottom:"10px"}}>Free. Always.</h3>
+      <p style={{fontSize:"14px",color:"#047857",maxWidth:"560px",margin:"0 auto 20px",lineHeight:1.7}}>
+        WorkForce IQ is completely free to use. We believe intelligent team management should be accessible to everyone.
+      </p>
+      <div style={{display:"flex",gap:"10px",justifyContent:"center",flexWrap:"wrap"}}>
+        {["✓ No subscription","✓ No ads","✓ No donations","✓ No hidden costs","✓ No credit card ever"].map(p=>(
+          <span key={p} style={{background:"#fff",border:"1px solid #A7F3D0",color:"#065F46",
+            borderRadius:"999px",padding:"5px 14px",fontSize:"12px",fontWeight:500}}>{p}</span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function CTA({onGetStarted,onSignIn}){
   return(
     <section style={{background:`linear-gradient(135deg,${S.navy} 0%,#312E81 100%)`,
       textAlign:"center",padding:"96px 5%"}}>
       <div style={{maxWidth:"640px",margin:"0 auto"}}>
-        <div style={{fontSize:"12px",fontWeight:600,color:"#818CF8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"12px"}}>Beta testing</div>
+        <div style={{fontSize:"12px",fontWeight:600,color:"#818CF8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"12px"}}>Open beta</div>
         <h2 style={{fontSize:"clamp(28px,4vw,44px)",fontWeight:700,color:"#fff",lineHeight:1.15,letterSpacing:"-0.02em",marginBottom:"16px"}}>
-          Help us shape the product.
+          Try it today. Free.
         </h2>
         <p style={{fontSize:"17px",color:"rgba(255,255,255,0.6)",lineHeight:1.7,marginBottom:"40px"}}>
-          Join our beta testing programme and get free early access to WorkForce IQ. Your feedback directly shapes what we build next.
+          Sign up, set up your workspace, and start making smarter allocation decisions in under 5 minutes.
         </p>
         <button onClick={onGetStarted}
           style={{background:"#fff",color:S.navy,border:"none",borderRadius:"10px",
             padding:"14px 32px",fontSize:"15px",fontWeight:700,cursor:"pointer",
-            fontFamily:"inherit",marginBottom:"12px"}}>
-          Get free beta access →
+            fontFamily:"inherit",marginBottom:"12px",display:"block",margin:"0 auto 12px"}}>
+          Get started free →
         </button>
-        <p style={{fontSize:"12px",color:"rgba(255,255,255,0.35)",marginBottom:"8px"}}>No credit card. No spam. Cancel anytime.</p>
+        <p style={{fontSize:"12px",color:"rgba(255,255,255,0.35)",marginBottom:"8px"}}>
+          No credit card · No ads · No donations · Just the tool.
+        </p>
         <p style={{fontSize:"13px",color:"rgba(255,255,255,0.5)"}}>
           Already have an account?{" "}
           <button onClick={onSignIn} style={{background:"none",border:"none",color:"#818CF8",
@@ -330,8 +356,8 @@ function CTA({onGetStarted,onSignIn}){
 
 function Footer(){
   return(
-    <footer style={{background:S.grey900,padding:"32px 5%",display:"flex",
-      alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"16px"}}>
+    <footer style={{background:S.grey900,padding:"28px 5%",display:"flex",
+      alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"12px"}}>
       <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
         <div style={{width:"28px",height:"28px",background:S.indigo,borderRadius:"7px",
           display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -339,10 +365,7 @@ function Footer(){
         </div>
         <span style={{fontSize:"13px",fontWeight:600,color:"#fff"}}>WorkForce IQ</span>
       </div>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"4px"}}>
-        <span style={{fontSize:"12px",color:"rgba(255,255,255,0.3)"}}>© 2026 Samuel Adebusoye. All rights reserved.</span>
-        <span style={{fontSize:"11px",color:"rgba(255,255,255,0.2)"}}>MVP — Beta version</span>
-      </div>
+      <span style={{fontSize:"12px",color:"rgba(255,255,255,0.3)"}}>WorkForce IQ · 2026 · Free to use</span>
     </footer>
   );
 }
@@ -358,6 +381,7 @@ export default function LandingPage({onGetStarted,onSignIn}){
       <Algorithm/>
       <Features/>
       <Templates/>
+      <FreeCommitment/>
       <CTA onGetStarted={onGetStarted} onSignIn={onSignIn}/>
       <Footer/>
     </div>

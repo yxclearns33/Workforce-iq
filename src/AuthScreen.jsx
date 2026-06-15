@@ -171,7 +171,8 @@ export default function AuthScreen({onAuth, onBack}){
   if(e){setError(e.message);setLoading(false);return;}
   const{data:{user}}=await supabase.auth.getUser();
   // check if workspace already exists
-  const{data:ws}=await supabase.from("workspaces").select("*").eq("owner_id",user.id).single();
+  const{data:ws}=await supabase.from("workspaces").select("*").eq("owner_id",user.id).maybeSingle();
+  console.log("workspace found:", ws);
   if(ws){
     // returning user — load their template and go straight to app
     const{TEMPLATES}=await import("./templates");
