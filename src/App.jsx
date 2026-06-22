@@ -937,8 +937,8 @@ export default function App({template,workspace,user,onSignOut}){
       }
       const{data:dbTasks}=await supabase.from("tasks").select("*").eq("workspace_id",ws.id);
       if(dbTasks?.length){
-        sTasks(dbTasks.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override})));
-      } else {
+        sTasks(dbTasks.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override,sprint:t.sprint_id})));
+            } else {
         const seeded=SEED_TASKS.map(t=>({
           name:t.name,type:t.type,complexity:t.complexity,
           priority:t.priority,effort:t.effort,status:t.status,
@@ -974,6 +974,7 @@ export default function App({template,workspace,user,onSignOut}){
     const dbP={...p};
     if(p.assigneeId!==undefined)dbP.assignee_id=p.assigneeId;
     if(p.riskOverride!==undefined)dbP.risk_override=p.riskOverride;
+    if(p.sprint!==undefined)dbP.sprint_id=p.sprint;
     supabase.from("tasks").update(dbP).eq("id",id).then(()=>{});
   };
   const upMember=(id,p)=>{
