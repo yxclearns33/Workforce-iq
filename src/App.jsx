@@ -78,10 +78,28 @@ function calcRisk(task,members){
   const p=calcProb(m,task);
   return p>=75?"Low":p>=55?"Medium":p>=35?"High":"Critical";
 }
-function rankCandidates(task,members){
-  return [...members]
-    .map(m=>({member:m,prob:calcProb(m,task),skill:getSkill(m,task.type)}))
-    .sort((a,b)=>b.prob-a.prob);
+function rankCandidates(task,members,tasks=[]){
+  return [...members].map(m=>{
+    const completions=tasks.filter(t=>t.assigneeId===m.id&&t.status==="Done"&&t.type===task.type).length;
+    const blocked=tasks.filter(t=>t.assigneeId===m.id&&t.status==="Blocked"&&t.type===task.type).length;
+    const active=tasks.filter(t=>t.assigneeId===m.id&&["Todo","In Progress","Review"].includes(t.status));
+    const boostedSkill=Math.min(5,getSkill(m,task.type)+completions*0.2);
+    const w=m.workload>90?.6:m.workload>75?.8:m.workload>60?.92:1;
+    const prob=Math.round((boostedSkill/5)*(cmx[task.complexity]??0.85)*efp(task.effort)*w*100);
+    return{member:m,prob,skill:getSkill(m,task.type),boostedSkill,completions,blocked,active};
+  }).sort((a,b)=>b.prob-a.prob);
+}
+function buildWhyText(c,task,allMembers){
+  const allS=allMembers.map(m=>getSkill(m,task.type));
+  const percentile=pct(c.skill,allS);
+  const parts=[];
+  if(c.completions>0)parts.push(`✓ ${c.completions} ${task.type} task${c.completions>1?"s":""} completed`);
+  parts.push(`${c.skill}/5 skill (${percentile}th pctl)`);
+  if(c.member.workload>80)parts.push(`⚠ ${c.member.workload}% load — high`);
+  else parts.push(`${c.member.workload}% load`);
+  if(c.blocked>0)parts.push(`${c.blocked} blocked ${task.type} task${c.blocked>1?"s":""} — caution`);
+  if(c.active.length>0)parts.push(`${c.active.length} active task${c.active.length>1?"s":""}`);
+  return parts.join(" · ");
 }
 function pct(score,allScores){
   if(!allScores.length)return 0;
@@ -153,27 +171,7 @@ function ensureXLSX(cb){
   s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
   s.onload=cb;document.head.appendChild(s);
 }
-function parseXLFile(file,cb){
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      if(window.XLSX){
-        const wb=window.XLSX.read(e.target.result,{type:"binary"});
-        const ws=wb.Sheets[wb.SheetNames[0]];
-        cb(window.XLSX.utils.sheet_to_json(ws,{defval:""}));
-      }else{
-        const lines=e.target.result.split("\n").filter(Boolean);
-        const hdr=lines[0].split(",").map(h=>h.trim().replace(/^"|"$/g,""));
-        cb(lines.slice(1).map(l=>{
-          const v=l.split(",").map(x=>x.trim().replace(/^"|"$/g,""));
-          return Object.fromEntries(hdr.map((h,i)=>[h,v[i]||""]));
-        }));
-      }
-    }catch(err){alert("Parse error: "+err.message);}
-  };
-  if(file.name.endsWith(".csv"))reader.readAsText(file);
-  else reader.readAsBinaryString(file);
-}
+
 
 /* ═══════════ CLAUDE ═══════════ */
 async function callClaude(prompt,sys=""){
@@ -317,7 +315,7 @@ function SmartSuggest({query,members,skillCols,onPick,onClose}){
   const q=query.toLowerCase();
   const matchedSkill=skillCols.find(s=>s.toLowerCase().includes(q)||q.includes(s.toLowerCase()))||skillCols[0];
   const syntheticTask={type:matchedSkill,complexity:"Medium",priority:"Medium",effort:3};
-  const ranked=rankCandidates(syntheticTask,members);
+  const ranked=rankCandidates(syntheticTask,members,[]);
   if(!members.length)return null;
   return(
     <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,width:"420px",background:J.surf,
@@ -328,7 +326,7 @@ function SmartSuggest({query,members,skillCols,onPick,onClose}){
       </div>
       {ranked.map((c,i)=>{
         const rt=RT[c.prob>=75?"Low":c.prob>=55?"Medium":c.prob>=35?"High":"Critical"];
-        const skillScore=getSkill(c.member,matchedSkill);
+        const skillScore=c.skill||getSkill(c.member,matchedSkill);
         const allSkillScores=members.map(m=>getSkill(m,matchedSkill));
         const percentile=pct(skillScore,allSkillScores);
         return(
@@ -368,7 +366,7 @@ function SmartSuggest({query,members,skillCols,onPick,onClose}){
               </div>
             </div>
             <div style={{marginTop:"6px",padding:"5px 8px",background:"#F9FAFB",borderRadius:"6px",fontSize:"11px",color:J.t2,lineHeight:"1.5"}}>
-              <b style={{color:J.t1}}>Why:</b> Skill {skillScore}/5 ({SL[skillScore]}) in {matchedSkill} · {percentile}th percentile · {c.member.workload}% load{c.member.workload>80?" ⚠":""}
+              <b style={{color:J.t1}}>Why:</b> {buildWhyText(c,syntheticTask,members)}
             </div>
           </div>
         );
@@ -393,6 +391,32 @@ function AIModal({title,prompt,onClose,extra}){
         :<div style={{background:"#F9FAFB",borderRadius:"8px",padding:"16px",color:J.t1,fontSize:"13px",lineHeight:"1.8",whiteSpace:"pre-wrap",border:`1px solid ${J.bdr}`}}>{text}</div>
       }
     </Modal>
+  );
+}
+
+/* ═══════════ CONFIRM MODAL ═══════════ */
+function ConfirmModal({confirm,onClose}){
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(17,24,39,.55)",zIndex:2000,
+      display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}>
+      <div style={{background:"#fff",borderRadius:"12px",padding:"24px",width:"380px",
+        maxWidth:"96vw",boxShadow:"0 20px 60px rgba(0,0,0,.2)"}}>
+        <div style={{fontSize:"16px",fontWeight:600,color:"#111827",marginBottom:"8px"}}>{confirm.title}</div>
+        <div style={{fontSize:"13px",color:"#6B7280",marginBottom:"24px",lineHeight:"1.6"}}>{confirm.message}</div>
+        <div style={{display:"flex",gap:"8px",justifyContent:"flex-end"}}>
+          <button onClick={onClose}
+            style={{background:"#F9FAFB",border:"1px solid #E5E7EB",color:"#374151",borderRadius:"6px",
+              padding:"8px 16px",cursor:"pointer",fontSize:"13px",fontWeight:500,fontFamily:"inherit"}}>
+            Cancel
+          </button>
+          <button onClick={()=>{confirm.onOk();onClose();}}
+            style={{background:"#DC2626",border:"none",color:"#fff",borderRadius:"6px",
+              padding:"8px 16px",cursor:"pointer",fontSize:"13px",fontWeight:600,fontFamily:"inherit"}}>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -552,7 +576,7 @@ function TaskDrawer({task,members,sprints,skillCols,onUpdate,onClose}){
 }
 
 /* ═══════════ MEMBER DRAWER ═══════════ */
-function MemberDrawer({member,tasks,sprints,skillCols,members,onUpdate,onDelete,onClose}){
+function MemberDrawer({member,tasks,sprints,skillCols,members,onUpdate,onDelete,onClose,onConfirm}){
   const [m,sM]=useState({...member,skills:{...member.skills}});
   const myTasks=tasks.filter(t=>t.assigneeId===member.id);
   const risk=memberRiskScore(member,tasks,members);
@@ -585,7 +609,7 @@ function MemberDrawer({member,tasks,sprints,skillCols,members,onUpdate,onDelete,
                 style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.35)",color:"#fff",borderRadius:"6px",padding:"5px 10px",cursor:"pointer",fontSize:"12px",fontWeight:500}}>
                 Save
               </button>
-              <button onClick={()=>{if(window.confirm(`Delete ${member.name}?`))onDelete(member.id);}}
+              <button onClick={()=>{onConfirm({title:"Remove Member",message:`Remove ${member.name} from the team? Their tasks will become unassigned.`,onOk:()=>onDelete(member.id)});}}
                 style={{background:"rgba(180,0,0,.25)",border:"1px solid rgba(255,100,100,.35)",color:"#fff",borderRadius:"6px",padding:"5px 10px",cursor:"pointer",fontSize:"12px"}}>
                 🗑
               </button>
@@ -619,6 +643,8 @@ function MemberDrawer({member,tasks,sprints,skillCols,members,onUpdate,onDelete,
             </div>
             <input type="range" min="0" max="100" value={m.workload}
               onChange={e=>sM(p=>({...p,workload:parseInt(e.target.value)}))}
+              onMouseUp={e=>supabase.from("members").update({workload:parseInt(e.target.value)}).eq("id",m.id).then(()=>{})}
+              onTouchEnd={e=>supabase.from("members").update({workload:parseInt(e.target.value)}).eq("id",m.id).then(()=>{})}
               style={{width:"100%",accentColor:m.color,cursor:"pointer"}}/>
           </div>
 
@@ -887,11 +913,7 @@ export default function App({template,workspace,user,onSignOut}){
   const [importSpId,sImportSpId]=useState("");
   const [dragTask,sDragTask]=useState(null);
   const [dragOver,sDragOver]=useState(null);
-  const [sbUrl,setSbUrl]=useState("");
-  const [sbKey,setSbKey]=useState("");
-  const [sbOn,setSbOn]=useState(false);
-  const [sbStatus,setSbStatus]=useState("");
-  const [showSb,setShowSb]=useState(false);
+  const [confirm,sConfirm]=useState(null);
   const importRef=useRef();
 
   /* ═══════ SUPABASE LOAD ═══════ */
@@ -937,8 +959,8 @@ export default function App({template,workspace,user,onSignOut}){
       }
       const{data:dbTasks}=await supabase.from("tasks").select("*").eq("workspace_id",ws.id);
       if(dbTasks?.length){
-        sTasks(dbTasks.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override,sprint:t.sprint_id})));
-            } else {
+        sTasks(dbTasks.map(t=>({...t,assigneeId:t.assignee_id,riskOverride:t.risk_override})));
+      } else {
         const seeded=SEED_TASKS.map(t=>({
           name:t.name,type:t.type,complexity:t.complexity,
           priority:t.priority,effort:t.effort,status:t.status,
@@ -954,19 +976,21 @@ export default function App({template,workspace,user,onSignOut}){
   },[user]);
   const taskRef=useRef();
 
-  /* Banner */
+  /* Banner — rule-based, no AI call */
   const refreshBanner=useCallback(()=>{
-    sBanner({text:"",loading:true});
     const high=tasks.filter(t=>["High","Critical"].includes(calcRisk(t,members)));
     const burn=members.filter(m=>m.workload>80);
-    callClaude(
-      `Team: ${members.map(m=>`${m.name}(${m.workload}%,${tasks.filter(t=>t.assigneeId===m.id).length}t)`).join(", ")||"empty"}. `+
-      `High-risk: ${high.map(t=>t.name).join(", ")||"none"}. `+
-      `Burnout: ${burn.map(m=>m.name).join(", ")||"none"}. 2-sentence PM insight + one bullet action.`,
-      "PM advisor. Max 2 sentences + 1 bullet. No markdown."
-    ).then(t=>sBanner({text:t,loading:false}));
+    const unass=tasks.filter(t=>!t.assigneeId&&t.status!=="Done");
+    const blkd=tasks.filter(t=>t.status==="Blocked");
+    let text="";
+    if(burn.length>0)text+=`⚠ ${burn.map(m=>m.name.split(" ")[0]).join(", ")} ${burn.length===1?"is":"are"} over 80% load — consider rebalancing. `;
+    if(blkd.length>0)text+=`🚧 ${blkd.length} blocked task${blkd.length>1?"s":""} need attention. `;
+    if(high.length>0)text+=`🔴 ${high.length} high/critical risk task${high.length>1?"s":""}: ${high.slice(0,2).map(t=>t.name).join(", ")}${high.length>2?"...":""}. `;
+    if(unass.length>0)text+=`📋 ${unass.length} unassigned task${unass.length>1?"s":""} in backlog.`;
+    if(!text)text="✅ Team looks healthy — no critical risks or overloaded members detected.";
+    sBanner({text,loading:false});
   },[tasks,members]);
-  useEffect(()=>{refreshBanner();},[]);
+  useEffect(()=>{refreshBanner();},[tasks,members]);
 
   /* CRUD */
   const upTask=(id,p)=>{
@@ -976,6 +1000,20 @@ export default function App({template,workspace,user,onSignOut}){
     if(p.riskOverride!==undefined)dbP.risk_override=p.riskOverride;
     if(p.sprint!==undefined)dbP.sprint_id=p.sprint;
     supabase.from("tasks").update(dbP).eq("id",id).then(()=>{});
+    if(p.status==="Done"){
+      const task=tasks.find(t=>t.id===id);
+      if(task?.assigneeId){
+        const member=members.find(m=>m.id===task.assigneeId);
+        if(member){
+          const completions=tasks.filter(t=>t.id!==id&&t.assigneeId===task.assigneeId&&t.status==="Done"&&t.type===task.type).length+1;
+          const currentSkill=getSkill(member,task.type);
+          const boosted=Math.min(5,parseFloat((currentSkill+completions*0.2).toFixed(1)));
+          const newSkills={...member.skills,[task.type]:boosted};
+          sMembers(ms=>ms.map(m=>m.id===member.id?{...m,skills:newSkills}:m));
+          supabase.from("members").update({skills:newSkills}).eq("id",member.id).then(()=>{});
+        }
+      }
+    }
   };
   const upMember=(id,p)=>{
     sMembers(ms=>ms.map(m=>m.id===id?{...m,...p}:m));
@@ -1329,19 +1367,22 @@ export default function App({template,workspace,user,onSignOut}){
             onDragOver={e=>onDragOver2(e,sprint.id)} onDrop={e=>onDrop(e,sprint.id)} onDragLeave={()=>sDragOver(null)}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",padding:"10px 14px",background:"#F9FAFB",borderBottom:`1px solid ${J.bdr}`,flexWrap:"wrap"}}>
               <span style={{color:J.t2,fontSize:"12px"}}>▼</span>
-              <input value={sprint.name} onChange={e=>sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,name:e.target.value}:s))}
+              <input key={sprint.id} defaultValue={sprint.name}
+                onBlur={e=>{const n=e.target.value;sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,name:n}:s));supabase.from("sprints").update({name:n}).eq("id",sprint.id).then(()=>{});}}
                 style={{background:"none",border:"none",fontSize:"13px",fontWeight:600,color:J.t1,fontFamily:"inherit",minWidth:"100px"}}/>
-              <Sel value={sprint.status} options={["Planned","Active","Completed"]} onChange={v=>sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,status:v}:s))} style={{fontSize:"11px"}}/>
-              <input type="date" value={sprint.start} onChange={e=>sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,start:e.target.value}:s))}
+              <Sel value={sprint.status} options={["Planned","Active","Completed"]} onChange={v=>{sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,status:v}:s));supabase.from("sprints").update({status:v}).eq("id",sprint.id).then(()=>{});}} style={{fontSize:"11px"}}/>
+              <input type="date" defaultValue={sprint.start}
+                onBlur={e=>{const n=e.target.value;sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,start:n}:s));supabase.from("sprints").update({start_date:n}).eq("id",sprint.id).then(()=>{});}}
                 style={{border:`1px solid ${J.bdr}`,borderRadius:"6px",padding:"3px 6px",fontSize:"11px",color:J.t2,fontFamily:"inherit"}}/>
               <span style={{color:J.tm,fontSize:"11px"}}>→</span>
-              <input type="date" value={sprint.end} onChange={e=>sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,end:e.target.value}:s))}
+              <input type="date" defaultValue={sprint.end}
+                onBlur={e=>{const n=e.target.value;sSprints(ss=>ss.map(s=>s.id===sprint.id?{...s,end:n}:s));supabase.from("sprints").update({end_date:n}).eq("id",sprint.id).then(()=>{});}}
                 style={{border:`1px solid ${J.bdr}`,borderRadius:"6px",padding:"3px 6px",fontSize:"11px",color:J.t2,fontFamily:"inherit"}}/>
               <span style={{fontSize:"11px",color:J.tm}}>{st.length} issues</span>
               <div style={{marginLeft:"auto",display:"flex",gap:"5px"}}>
                 <Btn v="pri" sm onClick={()=>addTask(sprint.id)}>+ Issue</Btn>
                 <Btn v="ai" sm onClick={()=>aiSprintHealth(sprint)}>AI</Btn>
-                <Btn v="dan" sm onClick={()=>{if(window.confirm(`Delete "${sprint.name}" and its ${st.length} issues?`))delSprint(sprint.id);}}>🗑</Btn>
+                <Btn v="dan" sm onClick={()=>{sConfirm({title:"Delete Sprint",message:`Delete "${sprint.name}" and its ${st.length} issues? This cannot be undone.`,onOk:()=>delSprint(sprint.id)});}}>🗑</Btn>
               </div>
             </div>
             <div style={{overflowX:"auto"}}>
@@ -1387,7 +1428,7 @@ export default function App({template,workspace,user,onSignOut}){
                           <div style={{display:"flex",gap:"3px"}}>
                             <Btn v="ai" sm onClick={()=>aiAssign(task)}>AI</Btn>
                             <Btn sm onClick={()=>aiRisk(task)} style={{background:"#FEF2F2",color:"#DC2626",border:"1px solid #FECACA"}}>Risk</Btn>
-                            <Btn v="dan" sm onClick={()=>{if(window.confirm("Delete?"))delTask(task.id);}}>🗑</Btn>
+                            <Btn v="dan" sm onClick={()=>{sConfirm({title:"Delete Issue",message:`Delete "${task.name}"? This cannot be undone.`,onOk:()=>delTask(task.id)});}}>🗑</Btn>
                           </div>
                         </td>
                       </tr>
@@ -1475,7 +1516,7 @@ export default function App({template,workspace,user,onSignOut}){
                   );
                 })}
                 <td style={{padding:"9px",textAlign:"center"}}>
-                  <Btn v="dan" sm onClick={()=>{if(window.confirm(`Delete ${m.name}?`))delMember(m.id);}}>🗑</Btn>
+                  <Btn v="dan" sm onClick={()=>{sConfirm({title:"Remove Member",message:`Remove ${m.name} from the team? Their tasks will become unassigned.`,onOk:()=>delMember(m.id)});}}>🗑</Btn>
                 </td>
               </tr>
             ))}
@@ -1866,15 +1907,7 @@ export default function App({template,workspace,user,onSignOut}){
           })}
           {members.length===0&&<div style={{fontSize:"11px",color:"rgba(255,255,255,.25)",padding:"5px 10px",fontStyle:"italic"}}>Upload Excel ↑ to add team</div>}
 
-          <div style={{marginTop:"10px",padding:"0 2px"}}>
-            <button onClick={()=>setShowSb(true)}
-              style={{width:"100%",background:sbOn?"rgba(16,185,129,.2)":"rgba(255,255,255,.05)",border:`1px solid ${sbOn?"rgba(16,185,129,.4)":"rgba(255,255,255,.1)"}`,
-                color:sbOn?"#6EE7B7":"rgba(255,255,255,.5)",borderRadius:"7px",padding:"7px 10px",cursor:"pointer",fontSize:"11px",fontWeight:500,fontFamily:"inherit",textAlign:"left",transition:"all .15s"}}
-              onMouseEnter={e=>e.currentTarget.style.background=sbOn?"rgba(16,185,129,.3)":"rgba(255,255,255,.1)"}
-              onMouseLeave={e=>e.currentTarget.style.background=sbOn?"rgba(16,185,129,.2)":"rgba(255,255,255,.05)"}>
-              🔌 {sbOn?"Supabase: On":"Connect Supabase"}
-            </button>
-          </div>
+
         </nav>
 
         <div style={{padding:"10px 14px",borderTop:"1px solid rgba(255,255,255,.07)"}}>
@@ -1942,7 +1975,7 @@ export default function App({template,workspace,user,onSignOut}){
               <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
                 <span style={{fontSize:"14px"}}>🤖</span>
                 <span style={{color:"#fff",fontWeight:500,fontSize:"12px"}}>AI Assistant</span>
-                {sbOn&&<span style={{background:"rgba(16,185,129,.3)",color:"#6EE7B7",fontSize:"9px",padding:"1px 6px",borderRadius:"999px"}}>DB</span>}
+
               </div>
               <div style={{display:"flex",gap:"4px"}}>
                 <button onClick={refreshBanner} style={{background:"rgba(255,255,255,.15)",border:"none",color:"rgba(255,255,255,.85)",borderRadius:"5px",padding:"3px 8px",cursor:"pointer",fontSize:"11px"}}>{banner.loading?"…":"↺"}</button>
@@ -1972,10 +2005,10 @@ export default function App({template,workspace,user,onSignOut}){
       {aiModal&&<AIModal title={aiModal.title} prompt={aiModal.prompt} extra={aiModal.extra} onClose={()=>sAiModal(null)}/>}
       {importMod==="skill"&&<SkillUploadModal/>}
       {importMod==="task"&&<TaskImportModal/>}
-      {showSb&&<SupabaseModal/>}
+      {confirm&&<ConfirmModal confirm={confirm} onClose={()=>sConfirm(null)}/>}
       {excelPreview&&<ExcelPreviewModal parsed={excelPreview} onApply={applyExcelTeam} onClose={()=>sExcelPreview(null)}/>}
       {selTask&&<TaskDrawer task={tasks.find(t=>t.id===selTask.id)||selTask} members={members} sprints={sprints} skillCols={skillCols} onUpdate={upTask} onClose={()=>sSelTask(null)}/>}
-      {selMem&&<MemberDrawer member={members.find(m=>m.id===selMem.id)||selMem} tasks={tasks} sprints={sprints} skillCols={skillCols} members={members} onUpdate={upMember} onDelete={delMember} onClose={()=>sSelMem(null)}/>}
+      {selMem&&<MemberDrawer member={members.find(m=>m.id===selMem.id)||selMem} tasks={tasks} sprints={sprints} skillCols={skillCols} members={members} onUpdate={upMember} onDelete={delMember} onClose={()=>sSelMem(null)} onConfirm={sConfirm}/>}
     </div>
   );
 }
