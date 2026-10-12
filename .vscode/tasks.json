@@ -1,0 +1,1 @@
+{"version":"2.0.0","tasks":[{"label":"WorkForce IQ: dev","type":"shell","command":"npm run dev","isBackground":true,"problemMatcher":[]},{"label":"WorkForce IQ: test","type":"shell","command":"npm test","group":"test","problemMatcher":[]}]}

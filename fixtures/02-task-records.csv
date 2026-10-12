@@ -1,0 +1,8 @@
+"ID",Name,Category,RequiredSkills,MinimumLevel,Hours,Status,Owner,CompletionAccepted,Sprint
+SYN-H1,Accepted Blazor authentication module,Backend,C#;Blazor,70,6,Done,Alex Morgan,TRUE,syn-history
+SYN-H2,Unaccepted React task,Backend,React,70,5,Done,Sam Patel,FALSE,syn-history
+SYN-W1,Existing SQL assignment,Backend,SQL,70,8,In Progress,Alex Morgan,FALSE,syn-sprint
+SYN-T1,Build secure sign-in,Backend,C#;Blazor,70,8,Todo,,FALSE,syn-sprint
+SYN-T2,Large C# change,Backend,C#,70,14,Todo,,FALSE,syn-sprint
+SYN-T3,Frontend component,Frontend,React;TypeScript,70,4,Todo,,FALSE,syn-sprint
+SYN-T5,Rust service,Backend,Rust,70,6,Todo,,FALSE,syn-sprint

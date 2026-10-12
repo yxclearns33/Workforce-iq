@@ -1,0 +1,9 @@
+import fs from 'node:fs';import * as XLSX from 'xlsx';import {syntheticSet} from '../src/lib/synthetic.js';import {makeReport} from '../src/lib/evaluation.js';import {reportWorkbook,reportPDF} from '../src/lib/reportExport.js';
+fs.mkdirSync('fixtures',{recursive:true});fs.mkdirSync('evaluation',{recursive:true});const d=syntheticSet();
+const save=(name,rows)=>{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Data');XLSX.writeFile(wb,`fixtures/${name}.xlsx`);fs.writeFileSync(`fixtures/${name}.csv`,XLSX.utils.sheet_to_csv(wb.Sheets.Data));};
+save('01-skill-matrix',d.members.map(m=>({'Member Name':m.name,...m.skills})));save('02-task-records',d.tasks.filter(t=>t.estimatedHours!=null).map(t=>({ID:t.id,Name:t.name,Category:t.type,RequiredSkills:t.requiredSkills.join(';'),MinimumLevel:t.minimumLevel,Hours:t.estimatedHours??'',Status:t.status,Owner:d.members.find(m=>m.id===t.assigneeId)?.name||'',CompletionAccepted:t.completionAccepted===true,Sprint:t.sprint})));
+save('03-expected-outcomes',d.expected.map(e=>({TaskID:e.taskId,ExpectedWinner:e.expectedWinner||'NONE',ExpectedBaseline:e.expectedBaseline||'NONE',ExpectedEligible:e.expectedEligible.join(';'),Scenario:e.scenario})));
+fs.writeFileSync('fixtures/synthetic-workspace.json',JSON.stringify({schemaVersion:3,...d,decisions:[]},null,2));
+const r=makeReport({...d,sprintId:'syn-sprint'});fs.writeFileSync('evaluation/controlled-results.json',JSON.stringify(r,null,2));XLSX.writeFile(reportWorkbook(r),'evaluation/example-evaluation.xlsx');fs.writeFileSync('evaluation/example-evaluation.pdf',Buffer.from(reportPDF(r).output('arraybuffer')));
+console.log(`Authored scenarios: ${r.summary.passed}/${r.summary.tested.length} pass. Outputs are engine checks, not user findings.`);
+if(r.summary.failed||r.summary.eligibilityViolations)process.exitCode=1;
