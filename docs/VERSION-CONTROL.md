@@ -1,15 +1,17 @@
-# Development history
+# Repository history for reliability iteration 1
 
-This branch starts from former WorkForce IQ commit 83b2e18. It preserves the supplied-source baseline and actual earlier enhancement commits. New commits are attributed to Codex and record assistance transparently. They do not recreate an imagined student development history.
+This delivery is based on your GitHub main commit e7fc0db. Your existing history is preserved. New branch: feature/workforce-reliability-iteration-1.
 
-For a fresh checkout from the package:
+The integration commit adds the proposal app, followed by an actual reliability-fix commit. Commits are attributed to Codex; they do not fabricate student authorship or earlier development dates. Main has not been changed and no remote push succeeded because GitHub authentication was unavailable.
+
+To restore the branch locally from this package, in its extracted directory:
 
     git clone workforce-iq-history.bundle reviewed-source
     cd reviewed-source
-    git switch feature/proposal-workforce
-    npm ci
-    npm run dev
+    git switch feature/workforce-reliability-iteration-1
+    git remote set-url origin https://github.com/yxclearns33/Workforce-iq.git
+    git push -u origin feature/workforce-reliability-iteration-1
 
-For your existing GitHub clone, preserve its .git directory. Create your own feature branch, review the new source and apply changes including deletions. If it shares the base commit, fetch the bundle and review/cherry-pick the feature commits. Otherwise inspect the supplied changes patch; do not overwrite unrelated work or transplant history blindly.
+Git will ask you to authenticate through your local Git credential manager as needed. Do not paste tokens into chat. Review the changes before opening a pull request. This branch descends from your main so its history can be compared normally.
 
-Record subsequent work as you do it. Keep observed screenshots and exports tied to actual app versions, dataset labels and test IDs. No GitHub remote was provided, so this build has not been pushed.
+For an existing clone, fetch this bundle to a separate review branch rather than replacing .git or overwriting uncommitted edits. Keep actual screenshots and observed findings for subsequent iterations.
