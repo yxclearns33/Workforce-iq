@@ -27,7 +27,7 @@ export function recommend(task, members, tasks, {useExperience=true, relevantIds
       if(!r.name || !finite(r.min) || r.min>100 || !finite(skillValue(member,r.name)) || Number(member.skills[r.name])<r.min) reasons.push(`Required skill: ${r.name || 'unknown'} ≥ ${r.min}`);
     });
     const history=tasks.filter(t=>t.id!==task.id && t.assigneeId===member.id && t.status==='Done' && t.completionAccepted===true);
-    const matches=history.filter(t=>relevantIds ? relevantIds.includes(t.id) : skillNames(t).some(s=>need.some(r=>r.name===s)));
+    const matches=history.filter(t=>relevantIds ? relevantIds.includes(t.id) : skillNames(t).some(s=>need.some(r=>r.name.toLowerCase()===s.toLowerCase())));
     const skill=need.length ? Math.round(need.reduce((sum,r)=>sum+Number(skillValue(member,r.name) ?? 0),0)/need.length) : 0;
     return {member,eligible:reasons.length===0,reasons,remaining,reserved,skill,evidenceIds:matches.map(t=>t.id),experience:useExperience ? matches.length : 0,version:VERSION};
   }).sort((a,b)=>Number(b.eligible)-Number(a.eligible) || b.experience-a.experience || b.skill-a.skill || (b.remaining ?? -1)-(a.remaining ?? -1) || a.member.id.localeCompare(b.member.id));
@@ -47,3 +47,5 @@ export function transitionTask(task, patch, now=new Date().toISOString()) {
   if(patch.status && patch.status!=='Done' && task.status==='Done') return {...next,completionAccepted:false,completedAt:null};
   return next;
 }
+
+export function taskSignature(task){return JSON.stringify([task.name,task.description||'',task.type,task.requiredSkills||[],task.minimumLevel??70,task.sprint,task.estimatedHours,task.requirementsConfirmed!==false]);}

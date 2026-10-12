@@ -6,7 +6,7 @@ import {catalog, importSkillRows, validSkill} from "./lib/skills";
 import {syntheticSet} from "./lib/synthetic";
 import * as XLSX from "xlsx";
 import RecommendationPanel from "./features/team/RecommendationPanel";
-import { transitionTask } from "./lib/recommendations";
+import { transitionTask, taskSignature } from "./lib/recommendations";
 import { validateTaskRows } from "./lib/taskImport";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import LandingPage from "./features/landing/LandingPage";
@@ -231,12 +231,13 @@ function WorkBar({done,inprog,review,todo,blocked,total}){
 ══════════════════════════════════════════════════════════ */
 function TaskDrawer({task,members,sprints,tasks,onUpdate,onClose}){
   const [t,setT]=useState({description:"",acceptanceCriteria:"",requiredSkills:[],...task});
+  const [validation,setValidation]=useState('');
   const [section,setSection]=useState("details");
   const activeSprint=sprints.find(s=>s.id===t.sprint)||sprints[0];
   const assignee=members.find(m=>m.id===t.assigneeId);
   const risk=calcRisk(t,members);const rt=RISK_T[risk];
   const prob=assignee?calcProb(assignee,t,tasks):null;
-  const save=()=>{if(!t.name.trim()||!sprints.some(s=>s.id===t.sprint)){window.alert('Enter a name and valid sprint.');return;}if(t.minimumLevel!==undefined&&(t.minimumLevel===''||!Number.isFinite(Number(t.minimumLevel))||t.minimumLevel<0||t.minimumLevel>100)){window.alert('Enter a proficiency threshold from 0 to 100.');return;}if(t.estimatedHours!==undefined&&t.estimatedHours!==null&&(t.estimatedHours===''||!Number.isFinite(Number(t.estimatedHours))||t.estimatedHours<=0||t.estimatedHours>10000)){window.alert('Estimated hours must be positive.');return;}if(t.status==='Done'&&!t.assigneeId){window.alert('A completed task needs an owner.');return;}if(t.assigneeId!==task.assigneeId&&!t.recommendationSnapshot&&!t.assignmentReason?.trim()){window.alert('Record a reason for the manual assignment.');return;}onUpdate(t.id,{...t,name:t.name.trim(),updatedAt:new Date().toISOString()});onClose();};
+  const save=()=>{setValidation('');const validSnapshot=t.recommendationSnapshot?.signature===taskSignature(t)?t.recommendationSnapshot:null;if(!t.name.trim()||!sprints.some(s=>s.id===t.sprint)){setValidation('Enter a name and valid sprint.');return;}if(t.minimumLevel!==undefined&&(t.minimumLevel===''||!Number.isFinite(Number(t.minimumLevel))||t.minimumLevel<0||t.minimumLevel>100)){setValidation('Enter a proficiency threshold from 0 to 100.');return;}if(t.estimatedHours!==undefined&&t.estimatedHours!==null&&(t.estimatedHours===''||!Number.isFinite(Number(t.estimatedHours))||t.estimatedHours<=0||t.estimatedHours>10000)){setValidation('Estimated hours must be positive.');return;}if(t.status==='Done'&&!t.assigneeId){setValidation('A completed task needs an owner.');return;}if(t.assigneeId!==task.assigneeId&&!validSnapshot&&!t.assignmentReason?.trim()){setValidation('Record a reason for the manual assignment.');return;}if(onUpdate(t.id,{...t,recommendationSnapshot:validSnapshot,name:t.name.trim(),updatedAt:new Date().toISOString()})!==false)onClose();};
   const suggestion=useMemo(()=>{
     const text=`${t.name} ${t.description}`.toLowerCase();
     const rules=[
@@ -257,7 +258,7 @@ function TaskDrawer({task,members,sprints,tasks,onUpdate,onClose}){
     <aside className="task-drawer" aria-label="Task details">
       <header className="task-drawer-head"><div><span>WORK ITEM · {activeSprint?.name||"Unplanned"}</span><h2>{task.name==="New issue"?"Create a task":"Edit task"}</h2><p>Define the work, review evidence and keep the final decision with you.</p></div><div><button className="drawer-save" onClick={save}>Save task</button><button className="drawer-close" onClick={onClose} aria-label="Close">×</button></div></header>
       <nav className="task-drawer-tabs">{[["details","Task details"],["team","Team & fit"],["risk","Risk & controls"]].map(([id,label])=><button key={id} className={section===id?"active":""} onClick={()=>setSection(id)}>{label}</button>)}</nav>
-      <div className="task-drawer-body">
+      <div className="task-drawer-body">{validation&&<p className="wiq-validation" role="alert">{validation}</p>}
         {section==="details"&&<>
           <section className="drawer-section task-title-section"><div className="section-kicker"><span>01</span><div><b>Describe the outcome</b><small>Suggestions are optional and remain faded until you confirm them.</small></div></div><label className="drawer-field full"><span>Task name</span><input autoFocus value={t.name} onChange={e=>setT(p=>({...p,name:e.target.value,requirementsConfirmed:false}))} placeholder="What needs to be delivered?"/></label><label className="drawer-field full"><span>Short brief</span><textarea value={t.description} onChange={e=>setT(p=>({...p,description:e.target.value,requirementsConfirmed:false}))} placeholder="Add the purpose, users affected and expected result…"/></label>
             <div className="suggestion-strip"><div><b>Suggested from your wording</b><small>Confirm one suggestion or apply the set.</small></div><button onClick={applyAll}>Apply all</button></div>
@@ -265,7 +266,7 @@ function TaskDrawer({task,members,sprints,tasks,onUpdate,onClose}){
           </section>
           <section className="drawer-section"><div className="section-kicker"><span>02</span><div><b>Plan the work</b><small>You choose every final value.</small></div></div><div className="drawer-field-grid">
             {[["Type",t.type,TASK_TYPES,v=>setT(p=>({...p,type:v}))],["Complexity",t.complexity,COMPLEXITIES,v=>setT(p=>({...p,complexity:v}))],["Priority",t.priority,PRIORITIES,v=>setT(p=>({...p,priority:v}))],["Status",t.status,STATUSES,v=>setT(p=>({...p,status:v}))],["Effort",String(t.effort),EFFORTS.map(String),v=>setT(p=>({...p,effort:Number(v)}))]].map(([label,value,options,change])=><label className="drawer-field" key={label}><span>{label}</span><select value={value} onChange={e=>change(e.target.value)}>{options.map(option=><option key={option}>{option}</option>)}</select></label>)}
-            <label className="drawer-field"><span>Sprint</span><select value={t.sprint} onChange={e=>setT(p=>({...p,sprint:e.target.value}))}>{sprints.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+            <label className="drawer-field"><span>Estimated hours</span><input aria-label="Task estimated hours" type="number" min="0.5" max="10000" step="0.5" value={t.estimatedHours??""} onChange={e=>setT(p=>({...p,estimatedHours:e.target.value===""?null:Number(e.target.value),recommendationSnapshot:null}))}/></label><label className="drawer-field"><span>Sprint</span><select value={t.sprint} onChange={e=>setT(p=>({...p,sprint:e.target.value}))}>{sprints.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
           </div><label className="drawer-field full"><span>Acceptance criteria</span><textarea value={t.acceptanceCriteria} onChange={e=>setT(p=>({...p,acceptanceCriteria:e.target.value}))} placeholder="What must be true before this can move to Done?"/></label><SkillPicker value={t.requiredSkills} members={members} tasks={tasks} onChange={skills=>setT(p=>({...p,requiredSkills:skills,requirementsConfirmed:false,recommendationSnapshot:null}))}/><label className="drawer-field"><span>Minimum declared proficiency (0–100)</span><input type="number" min="0" max="100" value={t.minimumLevel??70} onChange={e=>setT(p=>({...p,minimumLevel:e.target.value===''?'':Number(e.target.value),recommendationSnapshot:null}))}/></label><label><input type="checkbox" checked={t.requirementsConfirmed===true} onChange={e=>setT(p=>({...p,requirementsConfirmed:e.target.checked}))}/> I have reviewed the required skills</label></section>
         </>}
         {section==="team"&&<section className="drawer-section"><RecommendationPanel task={t} members={members} tasks={tasks} onChange={patch=>setT(current=>({...current,...patch}))}/><label className="drawer-field"><span>Manual assignment</span><select value={t.assigneeId||""} onChange={e=>setT(p=>({...p,assigneeId:e.target.value||null,recommendationSnapshot:null}))}><option value="">Leave unassigned</option>{members.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label><label className="drawer-field"><span>Assignment / override reason</span><textarea value={t.assignmentReason||""} onChange={e=>setT(p=>({...p,assignmentReason:e.target.value}))}/></label></section>}
@@ -279,7 +280,8 @@ function TaskDrawer({task,members,sprints,tasks,onUpdate,onClose}){
 /* ══════════════════════════════════════════════════════════
    MEMBER PROFILE DRAWER
 ══════════════════════════════════════════════════════════ */
-function MemberDrawer({member,tasks,sprints,onUpdate,onClose}){
+function MemberDrawer({member,members,tasks,sprints,onUpdate,onClose}){
+  const [validation,setValidation]=useState('');
   const [m,setM]=useState({...member});
   const myTasks=tasks.filter(t=>t.assigneeId===member.id);
   const risk=memberRiskScore(member,tasks);
@@ -289,7 +291,7 @@ function MemberDrawer({member,tasks,sprints,onUpdate,onClose}){
   const deliveredPoints=completed.reduce((n,t)=>n+Number(t.effort||0),0);
   const projectCount=new Set(myTasks.map(t=>t.sprint)).size;
   const completionRate=myTasks.length?Math.round(completed.length/myTasks.length*100):0;
-  const save=()=>{if(!m.name.trim()||Object.entries(m.skills||{}).some(([k,v])=>!validSkill(k)||v===''||!Number.isFinite(Number(v))||v<0||v>100)||Object.values(m.sprintCapacityHours||{}).some(v=>v!==null&&(v===''||!Number.isFinite(Number(v))||v<0||v>10000))){window.alert('Check name, declared proficiency 0–100 and capacity hours.');return;}onUpdate(m.id,m);onClose();};
+  const save=()=>{setValidation('');if(members.some(other=>other.id!==m.id&&other.name.trim().toLowerCase()===m.name.trim().toLowerCase())){setValidation('Member names must be unique for exact Excel matching.');return;}if(!m.name.trim()||Object.entries(m.skills||{}).some(([k,v])=>!validSkill(k)||v===''||!Number.isFinite(Number(v))||v<0||v>100)||Object.values(m.sprintCapacityHours||{}).some(v=>v!==null&&(v===''||!Number.isFinite(Number(v))||v<0||v>10000))){setValidation('Check name, declared proficiency 0–100 and capacity hours.');return;}if(onUpdate(m.id,m)!==false)onClose();};
 
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(9,30,66,.4)",zIndex:900,display:"flex",justifyContent:"flex-end"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
@@ -401,6 +403,7 @@ function MemberDrawer({member,tasks,sprints,onUpdate,onClose}){
 
           <SkillRadar member={m}/>
 
+{validation&&<p className="wiq-validation" role="alert">{validation}</p>}
           <SkillEditor member={m} onChange={setM}/>
 
           {/* Color picker */}
@@ -456,6 +459,7 @@ export default function App(){
   const restoreRef=useRef();const [workspaceRevision,setWorkspaceRevision]=useState(0);
   const [decisions,setDecisions]=useState(()=>load("wiq-decisions",[]));
   useEffect(()=>{localStorage.setItem("proposal-wiq-decisions",JSON.stringify(decisions));},[decisions]);
+  const [feedback,setFeedback]=useState('');
   const [tab,    setTab]    =useState("overview");
   const [aiModal,setAiModal]=useState(null);
   const [selectedTask,  setSelectedTask]  =useState(null);
@@ -498,17 +502,17 @@ export default function App(){
   },[tasks,members]);
   useEffect(()=>{refreshBanner();},[refreshBanner]);
 
-  const upTask=(id,p)=>{const old=tasks.find(t=>t.id===id);if(!old)return;const fields=['name','description','requiredSkills','sprint','estimatedHours','minimumLevel'];const invalidated=fields.some(k=>p[k]!==undefined&&JSON.stringify(p[k])!==JSON.stringify(old[k]));const patch={...p};if(invalidated&&(!p.recommendationSnapshot||p.recommendationSnapshot===old.recommendationSnapshot))patch.recommendationSnapshot=null;if(p.assigneeId!==undefined&&p.assigneeId!==old.assigneeId&&!p.recommendationSnapshot)patch.recommendationSnapshot=null;const next=transitionTask(old,patch);if(next.assigneeId!==old.assigneeId||next.recommendationSnapshot!==old.recommendationSnapshot||next.completionAccepted!==old.completionAccepted)setDecisions(ds=>[...ds,{at:new Date().toISOString(),taskId:id,owner:next.assigneeId,reason:next.assignmentReason||'',accepted:next.completionAccepted===true,snapshot:next.recommendationSnapshot||null}]);setTasks(ts=>ts.map(t=>t.id===id?next:t));};
-  const upMember=(id,p)=>{if(members.some(m=>m.id!==id&&m.name.toLowerCase()===p.name?.trim().toLowerCase())){window.alert('Member names must be unique for exact Excel matching.');return;}setMembers(ms=>ms.map(m=>m.id===id?{...m,...p}:m));};
+  const upTask=(id,p)=>{const old=tasks.find(t=>t.id===id)||{id,status:'Todo',assigneeId:null};const fields=['name','description','requiredSkills','sprint','estimatedHours','minimumLevel'];const invalidated=fields.some(k=>p[k]!==undefined&&JSON.stringify(p[k])!==JSON.stringify(old[k]));const patch={...p};if(p.recommendationSnapshot&&p.recommendationSnapshot.signature!==taskSignature({...old,...p}))patch.recommendationSnapshot=null;if(invalidated&&(!p.recommendationSnapshot||p.recommendationSnapshot===old.recommendationSnapshot))patch.recommendationSnapshot=null;if(p.assigneeId!==undefined&&p.assigneeId!==old.assigneeId&&(!p.recommendationSnapshot||p.recommendationSnapshot.memberId!==p.assigneeId))patch.recommendationSnapshot=null;const next=transitionTask(old,patch);if(next.status==='Done'&&!next.assigneeId){setFeedback('Assign an owner before completing a task.');return false;}if(next.assigneeId!==old.assigneeId||next.recommendationSnapshot!==old.recommendationSnapshot||next.completionAccepted!==old.completionAccepted)setDecisions(ds=>[...ds,{at:new Date().toISOString(),taskId:id,owner:next.assigneeId,reason:next.assignmentReason||'',accepted:next.completionAccepted===true,snapshot:next.recommendationSnapshot||null}]);setTasks(ts=>ts.some(t=>t.id===id)?ts.map(t=>t.id===id?next:t):[...ts,next]);};
+  const upMember=(id,p)=>{if(members.some(m=>m.id!==id&&m.name.toLowerCase()===p.name?.trim().toLowerCase())){setFeedback('Member names must be unique for exact Excel matching.');return false;}setMembers(ms=>ms.map(m=>m.id===id?{...m,...p}:m));};
   const delTask =(id)=>setTasks(ts=>ts.filter(t=>t.id!==id));
-  const addTask=(sprintId,status="Todo")=>{const sid=typeof sprintId==="string"?sprintId:(sprints.find(s=>s.status==="Active")||sprints[0])?.id;const task={id:"t"+Date.now(),name:"New issue",type:"Frontend",complexity:"Medium",priority:"Medium",effort:3,sprint:sid||"s1",status,assigneeId:null,riskOverride:null,requiredSkills:[],requirementsConfirmed:false};setTasks(ts=>[...ts,task]);setSelectedTask(task);};
+  const addTask=(sprintId,status="Todo")=>{const sid=typeof sprintId==="string"?sprintId:(sprints.find(s=>s.status==="Active")||sprints[0])?.id;const task={id:"t"+Date.now(),name:"New issue",type:"Frontend",complexity:"Medium",priority:"Medium",effort:3,sprint:sid||"s1",status,assigneeId:null,riskOverride:null,requiredSkills:[],requirementsConfirmed:false};setSelectedTask(task);};
   const addSprint=()=>setSprints(ss=>[...ss,{id:"s"+Date.now(),name:"New Sprint",start:"",end:"",status:"Planned"}]);
   const toggleSprint=id=>setCollapsed(prev=>{const next=new Set(prev);next.has(id)?next.delete(id):next.add(id);return next;});
   const nextSprintFor=id=>{const current=sprints.findIndex(s=>s.id===id);let target=sprints[current+1];if(!target){target={id:"s"+Date.now(),name:"Next Sprint",start:"",end:"",status:"Planned"};setSprints(ss=>[...ss,target]);}return target;};
   const carryOpen=id=>{const target=nextSprintFor(id);const count=tasks.filter(t=>t.sprint===id&&t.status!=="Done").length;if(!count){setCarryNotice("No unfinished tasks to carry forward.");return;}setTasks(ts=>ts.map(t=>t.sprint===id&&t.status!=="Done"?{...t,sprint:target.id,carriedFrom:id,carriedAt:new Date().toISOString()}:t));setCarryNotice(`${count} task${count===1?"":"s"} carried to ${target.name}. Status and owner preserved.`);setTimeout(()=>setCarryNotice(""),4500);};
   const carryOne=(task)=>{const target=nextSprintFor(task.sprint);setTasks(ts=>ts.map(t=>t.id===task.id?{...t,sprint:target.id,carriedFrom:task.sprint,carriedAt:new Date().toISOString()}:t));setCarryNotice(`${task.name} carried to ${target.name}.`);setTimeout(()=>setCarryNotice(""),4500);};
   const toggleMember=id=>setCollapsedMembers(prev=>{const next=new Set(prev);next.has(id)?next.delete(id):next.add(id);return next;});
-  const moveTask=(id,status,assigneeId)=>{if(status==='Done'&&!assigneeId){window.alert('Assign an owner before completing this task.');setDraggingTask(null);return;}const current=tasks.find(t=>t.id===id);let reason=current?.assignmentReason||'';if(current&&current.assigneeId!==(assigneeId||null)){reason=window.prompt('Reason for this manual reassignment:')||'';if(!reason.trim()){setDraggingTask(null);return;}}upTask(id,{status,assigneeId:assigneeId||null,assignmentReason:reason});setDraggingTask(null);};
+  const moveTask=(id,status,assigneeId)=>{if(status==='Done'&&!assigneeId){setFeedback('Assign an owner before completing this task.');setDraggingTask(null);return;}const current=tasks.find(t=>t.id===id);let reason=current?.assignmentReason||'';if(current&&current.assigneeId!==(assigneeId||null)){reason=window.prompt('Reason for this manual reassignment:')||'';if(!reason.trim()){setDraggingTask(null);return;}}upTask(id,{status,assigneeId:assigneeId||null,assignmentReason:reason});setDraggingTask(null);};
   const deleteSprint=id=>{const target=sprints.find(s=>s.id!==id);if(!target)return;setTasks(ts=>ts.map(t=>t.sprint===id?{...t,sprint:target.id}:t));setSprints(ss=>ss.filter(s=>s.id!==id));};
   const addMember=()=>{const cols=["#6554C0","#00875A","#0052CC","#FF8B00","#00A3BF","#CD1316"];setMembers(ms=>[...ms,{id:"m"+Date.now(),name:`New Member ${ms.length+1}`,role:"Developer",color:cols[ms.length%cols.length],workload:50,skills:{},sprintCapacityHours:{}}]);};
 
@@ -544,23 +548,23 @@ export default function App(){
   /* file parse */
   const parseFile=async(file,onData)=>{
     try{if(!file||file.size>8000000)throw new Error("Maximum file size is 8 MB");const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});onData(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""}));}
-    catch(error){window.alert(`Could not import: ${error.message}`);}
+    catch(error){setFeedback(`Could not import: ${error.message}`);}
   };
   const ensureXLSX=cb=>{window.XLSX=XLSX;cb();};
   const handleTaskImport=(file,spId)=>parseFile(file,rows=>{
     const result=validateTaskRows(rows,members,spId,tasks);
-    if(result.errors.length){window.alert(result.errors.join("\n"));return;}
+    if(result.errors.length){setFeedback(result.errors.join("\n"));return;}
     if(!window.confirm(`Import ${result.tasks.length} validated tasks into the selected sprint? Existing tasks will be retained.`))return;
     setTasks(ts=>[...ts,...result.tasks]);setImportModal(null);setImportFile(null);
   });
-  const handleSkillImport=(file)=>parseFile(file,rows=>{try{const next=importSkillRows(rows,members);if(!window.confirm(`Apply ${rows.length} validated member rows? Exact names are matched; new names create profiles.`))return;setMembers(next);setImportModal(null);setSkillFile(null);}catch(e){window.alert(e.message);}});
+  const handleSkillImport=(file)=>parseFile(file,rows=>{try{const next=importSkillRows(rows,members);if(!window.confirm(`Apply ${rows.length} validated member rows? Exact names are matched; new names create profiles.`))return;setMembers(next);setImportModal(null);setSkillFile(null);}catch(e){setFeedback(e.message);}});
 
   const downloadTemplate=()=>{
     ensureXLSX(()=>{const skills=catalog(members,tasks);const data=[["Member Name",...skills],...members.map(m=>[m.name,...skills.map(t=>m.skills[t]??"" )])];const ws=window.XLSX.utils.aoa_to_sheet(data);const wb=window.XLSX.utils.book_new();window.XLSX.utils.book_append_sheet(wb,ws,"Skills");window.XLSX.writeFile(wb,"skill_matrix_template.xlsx");});
   };
 
   const saveBackup=()=>{const blob=new Blob([JSON.stringify({schemaVersion:3,members,tasks,sprints,decisions,expected:JSON.parse(localStorage.getItem('wiq-eval-expected')||'[]'),label:localStorage.getItem('wiq-eval-label')||'',notes:localStorage.getItem('wiq-eval-notes')||''},null,2)],{type:'application/json'});const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download='WorkForce-IQ-Workspace-Backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-  const restoreBackup=async file=>{if(!file)return;try{if(file.size>8000000)throw new Error('Maximum 8 MB');const data=validateBackup(JSON.parse(await file.text()));if(!window.confirm(`Replace workspace with ${data.members.length} members and ${data.tasks.length} tasks? A backup will download first.`))return;saveBackup();setMembers(data.members);setTasks(data.tasks);setSprints(data.sprints);setDecisions(data.decisions||[]);setBoardSprint(data.sprints.find(s=>s.status==='Active')?.id||data.sprints[0]?.id||'');localStorage.setItem('wiq-eval-expected',JSON.stringify(data.expected||[]));localStorage.setItem('wiq-eval-label',data.label||'Restored synthetic evaluation');localStorage.setItem('wiq-eval-notes',data.notes||'');setWorkspaceRevision(v=>v+1);}catch(e){window.alert(e.message);}finally{if(restoreRef.current)restoreRef.current.value='';}};
+  const restoreBackup=async file=>{if(!file)return;try{if(file.size>8000000)throw new Error('Maximum 8 MB');const data=validateBackup(JSON.parse(await file.text()));if(!window.confirm(`Replace workspace with ${data.members.length} members and ${data.tasks.length} tasks? A backup will download first.`))return;saveBackup();setMembers(data.members);setTasks(data.tasks);setSprints(data.sprints);setDecisions(data.decisions||[]);setBoardSprint(data.sprints.find(s=>s.status==='Active')?.id||data.sprints[0]?.id||'');localStorage.setItem('wiq-eval-expected',JSON.stringify(data.expected||[]));localStorage.setItem('wiq-eval-label',data.label||'Restored synthetic evaluation');localStorage.setItem('wiq-eval-notes',data.notes||'');setWorkspaceRevision(v=>v+1);}catch(e){setFeedback(e.message);}finally{if(restoreRef.current)restoreRef.current.value='';}};
   const loadSynthetic=()=>{saveBackup();const data=syntheticSet();setMembers(data.members);setTasks(data.tasks);setSprints(data.sprints);setDecisions([]);setBoardSprint('syn-sprint');return data;};
   /* AI Actions */
   const aiAssign=(task)=>{
@@ -642,7 +646,7 @@ export default function App(){
             <div className="member-cell"><button className="lane-toggle" onClick={()=>toggleMember(lane.id)}>{isCollapsed?"›":"⌄"}</button>{lane.member?<Avatar name={lane.member.name} color={lane.member.color} size={38} onClick={()=>setSelectedMember(lane.member)}/>:<div className="unassigned-avatar">?</div>}<div className="member-identity"><strong>{lane.label}</strong><span>{lane.member?.role||"Tasks waiting for an owner"}</span></div>{lane.member&&<div className="member-metrics"><span><b>{lane.member.workload}%</b> workload</span><span><b>{laneProgress}%</b> progress</span><span><b>{blocked}</b> blocked</span><span><b>{points}</b> done pts</span><span><b>{avgFit}%</b> fit</span></div>}</div>
             {!isCollapsed&&COLS.map(col=><div className={`status-cell ${draggingTask?"drop-ready":""}`} key={col} data-status={col} data-owner={lane.member?.id||''} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const id=e.dataTransfer.getData("text/task-id")||draggingTask;moveTask(id,col,lane.member?.id)}}>
               {laneTasks.filter(t=>t.status===col).map(task=>{const risk=calcRisk(task,members);return <article className="board-task" data-task-id={task.id} draggable onDragStart={e=>{setDraggingTask(task.id);e.dataTransfer.setData("text/task-id",task.id);}} onDragEnd={()=>setDraggingTask(null)} onClick={()=>setSelectedTask(task)} key={task.id}><div><span className="drag-handle">⠿</span><small style={{color:TYPE_COLORS[task.type]}}>{task.type}</small><PriorityIcon priority={task.priority}/></div><strong>{task.name}</strong><footer><span>{task.estimatedHours==null?"Hours unknown":`${task.estimatedHours}h`}</span><b className={`risk-dot ${risk.toLowerCase()}`}>{risk}</b></footer><div className="task-actions" onClick={e=>e.stopPropagation()}><button disabled={col==="Todo"} onClick={()=>shift(task,-1)}>←</button><button onClick={()=>carryOne(task)} title="Carry to next sprint">↗</button><button disabled={col==="Blocked"} onClick={()=>shift(task,1)}>→</button></div>{task.carriedFrom&&<em className="carried-tag">Carried forward</em>}</article>})}
-              <button className="add-lane-task" onClick={()=>{const task={id:"t"+Date.now(),name:"New issue",type:"Frontend",complexity:"Medium",priority:"Medium",effort:3,sprint:selected.id,status:col,assigneeId:lane.member?.id||null,riskOverride:null,requiredSkills:[],requirementsConfirmed:false};setTasks(ts=>[...ts,task]);setSelectedTask(task);}}>+ Add</button>
+              <button className="add-lane-task" onClick={()=>{const task={id:"t"+Date.now(),name:"New issue",type:"Frontend",complexity:"Medium",priority:"Medium",effort:3,sprint:selected.id,status:col,assigneeId:lane.member?.id||null,riskOverride:null,requiredSkills:[],requirementsConfirmed:false};setSelectedTask(task);}}>+ Add</button>
             </div>)}
           </div>
         </section>;
@@ -655,7 +659,7 @@ export default function App(){
     <div>
       <div style={{display:"flex",gap:"8px",marginBottom:"16px"}}>
         <JBtn variant="primary" onClick={()=>addTask()}>Create issue</JBtn>
-        <JBtn variant="success" onClick={()=>setImportModal("tasks")}>📥 Import Excel/CSV</JBtn>
+        <JBtn variant="success" onClick={()=>{setFeedback('');setImportModal("tasks");}}>📥 Import Excel/CSV</JBtn>
         <JBtn onClick={addSprint}>+ Sprint</JBtn>
       </div>
       {sprints.map(sprint=>{
@@ -950,6 +954,7 @@ export default function App(){
   /* ── IMPORT MODALS ── */
   const TaskImportModal=()=>(
     <Modal title="Import issues from Excel / CSV" onClose={()=>{setImportModal(null);setImportFile(null);}}>
+      {feedback&&<p role="alert" className="wiq-validation">{feedback}</p>}
       <p style={{fontSize:"13px",color:J.textSecondary,margin:"0 0 16px"}}>Supported columns: <b>Task Name, Type, Complexity, Priority, Effort, Status, Assignee</b>. Matched automatically.</p>
       <div style={{marginBottom:"14px"}}>
         <div style={{fontSize:"11px",fontWeight:600,color:J.textSecondary,marginBottom:"5px",textTransform:"uppercase"}}>Target Sprint</div>
@@ -972,7 +977,7 @@ export default function App(){
   );
 
   const SkillImportModal=()=>(
-    <Modal title="Upload skill matrix" onClose={()=>{setImportModal(null);setSkillFile(null);}}>
+    <Modal title="Upload skill matrix" onClose={()=>{setImportModal(null);setSkillFile(null);}}>{feedback&&<p role="alert" className="wiq-validation">{feedback}</p>}
       <p style={{fontSize:"13px",color:J.textSecondary,margin:"0 0 16px"}}>Member names in column 1, skill scores (0–100) in subsequent columns. Download pre-filled template.</p>
       <div style={{marginBottom:"16px"}}><JBtn variant="success" onClick={downloadTemplate}>⬇ Download Template</JBtn></div>
       <div style={{marginBottom:"16px"}}>
@@ -1072,17 +1077,17 @@ export default function App(){
 
         {/* Content */}
         <div style={{flex:1,padding:"22px 24px",overflowY:"auto"}}>
-          <div style={{marginBottom:"18px"}}>
+          {feedback&&<div className="wiq-validation" role="alert">{feedback}<button onClick={()=>setFeedback('')}>Dismiss</button></div>}<div style={{marginBottom:"18px"}}>
             <h2 style={{margin:"0 0 2px",fontSize:"20px",fontWeight:700,color:J.textPrimary}}>{NAV.find(n=>n.id===tab)?.label}</h2>
             <p style={{margin:0,fontSize:"12px",color:J.textSecondary}}>{{overview:"Match work with skills, capacity and accepted experience",board:"Manage sprint delivery around team-member swimlanes",backlog:"Create and manage issues, assign to sprints, import from Excel/CSV",checkin:"Collect task-linked updates and draft RAID signals",skills:"Click a member name to open their full profile",team:"Click any card to open member profile and edit all details",risk:"Review risks, controls, KRIs, treatments and RAID signals",decisions:"Collect scores, apply transparent calculations and record approvals"}[tab]}</p>
           </div>
           {tab==="overview"&&<Overview members={members} tasks={tasks} sprints={sprints} onTask={setSelectedTask} onBoard={()=>setTab("board")} onAnalytics={()=>setTab("analytics")}/>}
-          {tab==="board"   &&<BoardTab/>}
-          {tab==="backlog" &&<BacklogTab/>}
-          {tab==="checkin" &&<WeeklyCheckinTab/>}
-          {tab==="skills" &&<SkillsWorkspace members={members} tasks={tasks} onOpen={setSelectedMember} onImport={()=>setImportModal("skills")} onTemplate={downloadTemplate}/>}
+          {tab==="board"   &&BoardTab()}
+          {tab==="backlog" &&BacklogTab()}
+          {tab==="checkin" &&WeeklyCheckinTab()}
+          {tab==="skills" &&<SkillsWorkspace members={members} tasks={tasks} onOpen={setSelectedMember} onImport={()=>{setFeedback('');setImportModal("skills");}} onTemplate={downloadTemplate}/>}
           {tab==="analytics"&&<EvaluationPage key={workspaceRevision} members={members} tasks={tasks} sprints={sprints} decisions={decisions} onLoadSynthetic={loadSynthetic}/>}
-          {tab==="team"    &&<TeamTab/>}
+          {tab==="team"    &&TeamTab()}
           {tab==="risk"    &&<RiskCenter tasks={tasks} members={members} calcRisk={calcRisk}/>}
           {tab==="decisions"&&<DecisionRoom/>}
         </div>
@@ -1131,11 +1136,11 @@ export default function App(){
 
       {/* ── MODALS & DRAWERS ── */}
       {aiModal&&<AIModal title={aiModal.title} prompt={aiModal.prompt} extra={aiModal.extra} onClose={()=>setAiModal(null)}/>}
-      {importModal==="tasks"&&<TaskImportModal/>}
-      {importModal==="skills"&&<SkillImportModal/>}
+      {importModal==="tasks"&&TaskImportModal()}
+      {importModal==="skills"&&SkillImportModal()}
 
       {selectedTask&&(()=>{const t=tasks.find(tt=>tt.id===selectedTask.id)||selectedTask;return <TaskDrawer task={t} members={members} sprints={sprints} tasks={tasks} onUpdate={upTask} onClose={()=>setSelectedTask(null)}/>;})()}
-      {selectedMember&&(()=>{const m=members.find(mm=>mm.id===selectedMember.id)||selectedMember;return <MemberDrawer member={m} tasks={tasks} sprints={sprints} onUpdate={upMember} onClose={()=>setSelectedMember(null)}/>;})()}
+      {selectedMember&&(()=>{const m=members.find(mm=>mm.id===selectedMember.id)||selectedMember;return <MemberDrawer member={m} members={members} tasks={tasks} sprints={sprints} onUpdate={upMember} onClose={()=>setSelectedMember(null)}/>;})()}
     </div>
   );
 }

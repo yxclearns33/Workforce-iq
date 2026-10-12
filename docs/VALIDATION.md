@@ -14,3 +14,5 @@ Not verified: live Gemini service responses, production Supabase/shared-data dep
 Reports preserve snapshots but localStorage and decision logs are not tamper-proof. Expected answers are separate inputs; a scenario without an expected answer cannot count as passed. Synthetic results cannot establish employee proficiency or real-world gains.
 
 Packaging correction: configuration and production build verified in a source folder without .git. jsdom pinned to 26.1.0; 40 tests and DOM checks passed after the change.
+
+Iteration 1 adds DOM regression checks for declared-only matrix columns, CSharp alias searches, empty results, stable DOM during drag start and cancelling a new task without saving it. The broader automated suite remains 40 tests; browser-specific issues still require local reproduction.

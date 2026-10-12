@@ -59,3 +59,9 @@ UI tests simulate DOM interactions rather than a real browser. Read docs/VALIDAT
 ## Git history
 
 The supplied bundle contains actual source history and this feature branch. Read docs/VERSION-CONTROL.md before integrating it into your GitHub repository. No remote has been pushed or fabricated. Inter is bundled under its SIL Open Font License.
+
+## Reliability iteration 1
+
+The matrix starts with declared skills, supports alias searches and separate member filtering, and explains empty results. Profile filtering and skill creation are separate. Required-skill searches no longer truncate the catalogue at 35 entries. Tasks and profile validation stays visible; failed imports show errors inside the dialog. Cancelled new tasks are not persisted. Screen identity stays stable when drag state or inline edits update, and stale recommendation snapshots are discarded after input changes.
+
+GitHub original main uses a 1–5 declaration scale; this proposal branch uses 0–100. Review old declarations explicitly before recommendation testing. Do not interpret 1–5 values as validated 0–100 scores or silently multiply them.

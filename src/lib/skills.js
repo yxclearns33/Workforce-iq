@@ -4,7 +4,7 @@ export function normalizeSkill(value){const s=String(value??'').trim().replace(/
 export function validSkill(s){return typeof s==='string'&&s.length>0&&s.length<=60&&!/[\n\r<>]/.test(s)&&!['__proto__','constructor','prototype'].includes(s);}
 export function skillNames(task){return [...new Set((task.requiredSkills?.length?task.requiredSkills:[task.type]).map(s=>normalizeSkill(typeof s==='string'?s:s.name)).filter(Boolean))];}
 export function catalog(members=[],tasks=[]){return [...new Set([...SKILLS,...members.flatMap(m=>Object.keys(m.skills||{})),...tasks.flatMap(skillNames)].map(normalizeSkill))].filter(validSkill).sort((a,b)=>a.localeCompare(b));}
-export function skillValue(member,name){const key=Object.keys(member.skills||{}).find(k=>normalizeSkill(k)===normalizeSkill(name));return key===undefined?null:member.skills[key];}
+export function skillValue(member,name){const key=Object.keys(member.skills||{}).find(k=>normalizeSkill(k).toLowerCase()===normalizeSkill(name).toLowerCase());return key===undefined?null:member.skills[key];}
 export function importSkillRows(rows,members){
  if(!rows.length||rows.length>2000)throw new Error('Import 1–2,000 skill rows.');
  const next=structuredClone(members),seen=new Set();
