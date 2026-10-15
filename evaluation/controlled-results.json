@@ -1,0 +1,833 @@
+{
+  "metadata": {
+    "label": "Authored Synthetic Set 1",
+    "capturedAt": "2026-10-12T20:07:04.005Z",
+    "appVersion": "0.3.0",
+    "commit": "source",
+    "ruleVersion": "experience-skills-v2",
+    "sprintId": "syn-sprint",
+    "sprint": "Synthetic test sprint",
+    "scope": "Synthetic controlled evaluation. Descriptive analytics do not establish productivity or competence.",
+    "notes": "",
+    "relevance": "At least one confirmed required skill overlaps an accepted completed task; each task counts once."
+  },
+  "summary": {
+    "members": 3,
+    "tasks": 6,
+    "changed": 1,
+    "noEligible": 2,
+    "eligibilityViolations": 0,
+    "tested": [
+      {
+        "taskId": "SYN-T1",
+        "task": "Build secure sign-in",
+        "estimatedHours": 8,
+        "requirements": "C# ≥ 70; Blazor ≥ 70",
+        "baselineId": "syn-sam",
+        "baseline": "Sam Patel",
+        "enhancedId": "syn-alex",
+        "enhanced": "Alex Morgan",
+        "eligibleIds": [
+          "syn-alex",
+          "syn-sam"
+        ],
+        "changed": true,
+        "eligibilityPreserved": true,
+        "evidenceIds": [
+          "SYN-H1"
+        ],
+        "expectedWinner": "syn-alex",
+        "expectedBaseline": "syn-sam",
+        "expectedEligible": [
+          "syn-alex",
+          "syn-sam"
+        ],
+        "scenario": "Relevant accepted experience changes winner",
+        "testResult": "Pass"
+      },
+      {
+        "taskId": "SYN-T2",
+        "task": "Large C# change",
+        "estimatedHours": 14,
+        "requirements": "C# ≥ 70",
+        "baselineId": "syn-sam",
+        "baseline": "Sam Patel",
+        "enhancedId": "syn-sam",
+        "enhanced": "Sam Patel",
+        "eligibleIds": [
+          "syn-sam"
+        ],
+        "changed": false,
+        "eligibilityPreserved": true,
+        "evidenceIds": [],
+        "expectedWinner": "syn-sam",
+        "expectedBaseline": "syn-sam",
+        "expectedEligible": [
+          "syn-sam"
+        ],
+        "scenario": "Experience cannot override capacity",
+        "testResult": "Pass"
+      },
+      {
+        "taskId": "SYN-T3",
+        "task": "Frontend component",
+        "estimatedHours": 4,
+        "requirements": "React ≥ 70; TypeScript ≥ 70",
+        "baselineId": "syn-jo",
+        "baseline": "Jo Taylor",
+        "enhancedId": "syn-jo",
+        "enhanced": "Jo Taylor",
+        "eligibleIds": [
+          "syn-jo"
+        ],
+        "changed": false,
+        "eligibilityPreserved": true,
+        "evidenceIds": [],
+        "expectedWinner": "syn-jo",
+        "expectedBaseline": "syn-jo",
+        "expectedEligible": [
+          "syn-jo"
+        ],
+        "scenario": "Suitable newcomer remains eligible",
+        "testResult": "Pass"
+      },
+      {
+        "taskId": "SYN-T4",
+        "task": "Unknown task estimate",
+        "estimatedHours": null,
+        "requirements": "SQL ≥ 70",
+        "baselineId": null,
+        "baseline": "No eligible candidate",
+        "enhancedId": null,
+        "enhanced": "No eligible candidate",
+        "eligibleIds": [],
+        "changed": false,
+        "eligibilityPreserved": true,
+        "evidenceIds": [],
+        "expectedWinner": null,
+        "expectedBaseline": null,
+        "expectedEligible": [],
+        "scenario": "Unknown estimate blocks recommendation",
+        "testResult": "Pass"
+      },
+      {
+        "taskId": "SYN-T5",
+        "task": "Rust service",
+        "estimatedHours": 6,
+        "requirements": "Rust ≥ 70",
+        "baselineId": null,
+        "baseline": "No eligible candidate",
+        "enhancedId": null,
+        "enhanced": "No eligible candidate",
+        "eligibleIds": [],
+        "changed": false,
+        "eligibilityPreserved": true,
+        "evidenceIds": [],
+        "expectedWinner": null,
+        "expectedBaseline": null,
+        "expectedEligible": [],
+        "scenario": "Missing skills produces no eligible candidate",
+        "testResult": "Pass"
+      }
+    ],
+    "passed": 5,
+    "failed": 0,
+    "agreement": 100
+  },
+  "rows": [
+    {
+      "taskId": "SYN-W1",
+      "task": "Existing SQL assignment",
+      "estimatedHours": 8,
+      "requirements": "SQL ≥ 70",
+      "baselineId": "syn-sam",
+      "baseline": "Sam Patel",
+      "enhancedId": "syn-sam",
+      "enhanced": "Sam Patel",
+      "eligibleIds": [
+        "syn-alex",
+        "syn-sam"
+      ],
+      "changed": false,
+      "eligibilityPreserved": true,
+      "evidenceIds": [],
+      "expectedWinner": null,
+      "expectedBaseline": null,
+      "expectedEligible": null,
+      "scenario": "",
+      "testResult": "Not specified"
+    },
+    {
+      "taskId": "SYN-T1",
+      "task": "Build secure sign-in",
+      "estimatedHours": 8,
+      "requirements": "C# ≥ 70; Blazor ≥ 70",
+      "baselineId": "syn-sam",
+      "baseline": "Sam Patel",
+      "enhancedId": "syn-alex",
+      "enhanced": "Alex Morgan",
+      "eligibleIds": [
+        "syn-alex",
+        "syn-sam"
+      ],
+      "changed": true,
+      "eligibilityPreserved": true,
+      "evidenceIds": [
+        "SYN-H1"
+      ],
+      "expectedWinner": "syn-alex",
+      "expectedBaseline": "syn-sam",
+      "expectedEligible": [
+        "syn-alex",
+        "syn-sam"
+      ],
+      "scenario": "Relevant accepted experience changes winner",
+      "testResult": "Pass"
+    },
+    {
+      "taskId": "SYN-T2",
+      "task": "Large C# change",
+      "estimatedHours": 14,
+      "requirements": "C# ≥ 70",
+      "baselineId": "syn-sam",
+      "baseline": "Sam Patel",
+      "enhancedId": "syn-sam",
+      "enhanced": "Sam Patel",
+      "eligibleIds": [
+        "syn-sam"
+      ],
+      "changed": false,
+      "eligibilityPreserved": true,
+      "evidenceIds": [],
+      "expectedWinner": "syn-sam",
+      "expectedBaseline": "syn-sam",
+      "expectedEligible": [
+        "syn-sam"
+      ],
+      "scenario": "Experience cannot override capacity",
+      "testResult": "Pass"
+    },
+    {
+      "taskId": "SYN-T3",
+      "task": "Frontend component",
+      "estimatedHours": 4,
+      "requirements": "React ≥ 70; TypeScript ≥ 70",
+      "baselineId": "syn-jo",
+      "baseline": "Jo Taylor",
+      "enhancedId": "syn-jo",
+      "enhanced": "Jo Taylor",
+      "eligibleIds": [
+        "syn-jo"
+      ],
+      "changed": false,
+      "eligibilityPreserved": true,
+      "evidenceIds": [],
+      "expectedWinner": "syn-jo",
+      "expectedBaseline": "syn-jo",
+      "expectedEligible": [
+        "syn-jo"
+      ],
+      "scenario": "Suitable newcomer remains eligible",
+      "testResult": "Pass"
+    },
+    {
+      "taskId": "SYN-T4",
+      "task": "Unknown task estimate",
+      "estimatedHours": null,
+      "requirements": "SQL ≥ 70",
+      "baselineId": null,
+      "baseline": "No eligible candidate",
+      "enhancedId": null,
+      "enhanced": "No eligible candidate",
+      "eligibleIds": [],
+      "changed": false,
+      "eligibilityPreserved": true,
+      "evidenceIds": [],
+      "expectedWinner": null,
+      "expectedBaseline": null,
+      "expectedEligible": [],
+      "scenario": "Unknown estimate blocks recommendation",
+      "testResult": "Pass"
+    },
+    {
+      "taskId": "SYN-T5",
+      "task": "Rust service",
+      "estimatedHours": 6,
+      "requirements": "Rust ≥ 70",
+      "baselineId": null,
+      "baseline": "No eligible candidate",
+      "enhancedId": null,
+      "enhanced": "No eligible candidate",
+      "eligibleIds": [],
+      "changed": false,
+      "eligibilityPreserved": true,
+      "evidenceIds": [],
+      "expectedWinner": null,
+      "expectedBaseline": null,
+      "expectedEligible": [],
+      "scenario": "Missing skills produces no eligible candidate",
+      "testResult": "Pass"
+    }
+  ],
+  "candidates": [
+    {
+      "taskId": "SYN-W1",
+      "memberId": "syn-sam",
+      "member": "Sam Patel",
+      "eligible": true,
+      "skill": 95,
+      "reserved": 0,
+      "available": 24,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Skills and capacity met"
+    },
+    {
+      "taskId": "SYN-W1",
+      "memberId": "syn-alex",
+      "member": "Alex Morgan",
+      "eligible": true,
+      "skill": 80,
+      "reserved": 0,
+      "available": 20,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Skills and capacity met"
+    },
+    {
+      "taskId": "SYN-W1",
+      "memberId": "syn-jo",
+      "member": "Jo Taylor",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 0,
+      "available": 16,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: SQL ≥ 70"
+    },
+    {
+      "taskId": "SYN-T1",
+      "memberId": "syn-alex",
+      "member": "Alex Morgan",
+      "eligible": true,
+      "skill": 80,
+      "reserved": 8,
+      "available": 12,
+      "experience": 1,
+      "evidenceIds": "SYN-H1",
+      "reasons": "Skills and capacity met"
+    },
+    {
+      "taskId": "SYN-T1",
+      "memberId": "syn-sam",
+      "member": "Sam Patel",
+      "eligible": true,
+      "skill": 95,
+      "reserved": 0,
+      "available": 24,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Skills and capacity met"
+    },
+    {
+      "taskId": "SYN-T1",
+      "memberId": "syn-jo",
+      "member": "Jo Taylor",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 0,
+      "available": 16,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: C# ≥ 70; Required skill: Blazor ≥ 70"
+    },
+    {
+      "taskId": "SYN-T2",
+      "memberId": "syn-sam",
+      "member": "Sam Patel",
+      "eligible": true,
+      "skill": 95,
+      "reserved": 0,
+      "available": 24,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Skills and capacity met"
+    },
+    {
+      "taskId": "SYN-T2",
+      "memberId": "syn-alex",
+      "member": "Alex Morgan",
+      "eligible": false,
+      "skill": 80,
+      "reserved": 8,
+      "available": 12,
+      "experience": 1,
+      "evidenceIds": "SYN-H1",
+      "reasons": "Insufficient sprint capacity"
+    },
+    {
+      "taskId": "SYN-T2",
+      "memberId": "syn-jo",
+      "member": "Jo Taylor",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 0,
+      "available": 16,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: C# ≥ 70"
+    },
+    {
+      "taskId": "SYN-T3",
+      "memberId": "syn-jo",
+      "member": "Jo Taylor",
+      "eligible": true,
+      "skill": 85,
+      "reserved": 0,
+      "available": 16,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Skills and capacity met"
+    },
+    {
+      "taskId": "SYN-T3",
+      "memberId": "syn-sam",
+      "member": "Sam Patel",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 0,
+      "available": 24,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: React ≥ 70; Required skill: TypeScript ≥ 70"
+    },
+    {
+      "taskId": "SYN-T3",
+      "memberId": "syn-alex",
+      "member": "Alex Morgan",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 8,
+      "available": 12,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: React ≥ 70; Required skill: TypeScript ≥ 70"
+    },
+    {
+      "taskId": "SYN-T4",
+      "memberId": "syn-sam",
+      "member": "Sam Patel",
+      "eligible": false,
+      "skill": 95,
+      "reserved": 0,
+      "available": 24,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Set positive estimated hours; story points are not hours"
+    },
+    {
+      "taskId": "SYN-T4",
+      "memberId": "syn-alex",
+      "member": "Alex Morgan",
+      "eligible": false,
+      "skill": 80,
+      "reserved": 8,
+      "available": 12,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Set positive estimated hours; story points are not hours"
+    },
+    {
+      "taskId": "SYN-T4",
+      "memberId": "syn-jo",
+      "member": "Jo Taylor",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 0,
+      "available": 16,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Set positive estimated hours; story points are not hours; Required skill: SQL ≥ 70"
+    },
+    {
+      "taskId": "SYN-T5",
+      "memberId": "syn-sam",
+      "member": "Sam Patel",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 0,
+      "available": 24,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: Rust ≥ 70"
+    },
+    {
+      "taskId": "SYN-T5",
+      "memberId": "syn-jo",
+      "member": "Jo Taylor",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 0,
+      "available": 16,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: Rust ≥ 70"
+    },
+    {
+      "taskId": "SYN-T5",
+      "memberId": "syn-alex",
+      "member": "Alex Morgan",
+      "eligible": false,
+      "skill": 0,
+      "reserved": 8,
+      "available": 12,
+      "experience": 0,
+      "evidenceIds": "",
+      "reasons": "Required skill: Rust ≥ 70"
+    }
+  ],
+  "capacity": [
+    {
+      "id": "syn-alex",
+      "name": "Alex Morgan",
+      "capacity": 20,
+      "allocated": 8,
+      "available": 12
+    },
+    {
+      "id": "syn-sam",
+      "name": "Sam Patel",
+      "capacity": 24,
+      "allocated": 0,
+      "available": 24
+    },
+    {
+      "id": "syn-jo",
+      "name": "Jo Taylor",
+      "capacity": 16,
+      "allocated": 0,
+      "available": 16
+    }
+  ],
+  "statuses": [
+    {
+      "status": "Todo",
+      "count": 5
+    },
+    {
+      "status": "In Progress",
+      "count": 1
+    },
+    {
+      "status": "Review",
+      "count": 0
+    },
+    {
+      "status": "Done",
+      "count": 0
+    },
+    {
+      "status": "Blocked",
+      "count": 0
+    }
+  ],
+  "coverage": [
+    {
+      "skill": "SQL",
+      "declared": 2,
+      "meets70": 2,
+      "acceptedTasks": 0
+    },
+    {
+      "skill": "C#",
+      "declared": 2,
+      "meets70": 2,
+      "acceptedTasks": 1
+    },
+    {
+      "skill": "Blazor",
+      "declared": 2,
+      "meets70": 2,
+      "acceptedTasks": 1
+    },
+    {
+      "skill": "React",
+      "declared": 1,
+      "meets70": 1,
+      "acceptedTasks": 0
+    },
+    {
+      "skill": "TypeScript",
+      "declared": 1,
+      "meets70": 1,
+      "acceptedTasks": 0
+    },
+    {
+      "skill": "Rust",
+      "declared": 0,
+      "meets70": 0,
+      "acceptedTasks": 0
+    }
+  ],
+  "inputs": {
+    "members": [
+      {
+        "id": "syn-alex",
+        "name": "Alex Morgan",
+        "role": "Software developer",
+        "color": "#2563EB",
+        "skills": {
+          "C#": 80,
+          "Blazor": 80,
+          "SQL": 80
+        },
+        "sprintCapacityHours": {
+          "syn-sprint": 20
+        },
+        "workload": 0
+      },
+      {
+        "id": "syn-sam",
+        "name": "Sam Patel",
+        "role": "Software developer",
+        "color": "#14B8A6",
+        "skills": {
+          "C#": 95,
+          "Blazor": 95,
+          "SQL": 95
+        },
+        "sprintCapacityHours": {
+          "syn-sprint": 24
+        },
+        "workload": 0
+      },
+      {
+        "id": "syn-jo",
+        "name": "Jo Taylor",
+        "role": "New entrant",
+        "color": "#8B5CF6",
+        "skills": {
+          "React": 85,
+          "TypeScript": 85
+        },
+        "sprintCapacityHours": {
+          "syn-sprint": 16
+        },
+        "workload": 0
+      }
+    ],
+    "tasks": [
+      {
+        "id": "SYN-H1",
+        "name": "Accepted Blazor authentication module",
+        "description": "Accepted Blazor authentication module",
+        "type": "Backend",
+        "requiredSkills": [
+          "C#",
+          "Blazor"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": 6,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "Done",
+        "sprint": "syn-history",
+        "assigneeId": "syn-alex",
+        "completionAccepted": true
+      },
+      {
+        "id": "SYN-H2",
+        "name": "Unaccepted React task",
+        "description": "Unaccepted React task",
+        "type": "Backend",
+        "requiredSkills": [
+          "React"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": 5,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "Done",
+        "sprint": "syn-history",
+        "assigneeId": "syn-sam",
+        "completionAccepted": false
+      },
+      {
+        "id": "SYN-W1",
+        "name": "Existing SQL assignment",
+        "description": "Existing SQL assignment",
+        "type": "Backend",
+        "requiredSkills": [
+          "SQL"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": 8,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "In Progress",
+        "sprint": "syn-sprint",
+        "assigneeId": "syn-alex"
+      },
+      {
+        "id": "SYN-T1",
+        "name": "Build secure sign-in",
+        "description": "Build secure sign-in",
+        "type": "Backend",
+        "requiredSkills": [
+          "C#",
+          "Blazor"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": 8,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "Todo",
+        "sprint": "syn-sprint",
+        "assigneeId": null
+      },
+      {
+        "id": "SYN-T2",
+        "name": "Large C# change",
+        "description": "Large C# change",
+        "type": "Backend",
+        "requiredSkills": [
+          "C#"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": 14,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "Todo",
+        "sprint": "syn-sprint",
+        "assigneeId": null
+      },
+      {
+        "id": "SYN-T3",
+        "name": "Frontend component",
+        "description": "Frontend component",
+        "type": "Frontend",
+        "requiredSkills": [
+          "React",
+          "TypeScript"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": 4,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "Todo",
+        "sprint": "syn-sprint",
+        "assigneeId": null
+      },
+      {
+        "id": "SYN-T4",
+        "name": "Unknown task estimate",
+        "description": "Unknown task estimate",
+        "type": "Backend",
+        "requiredSkills": [
+          "SQL"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": null,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "Todo",
+        "sprint": "syn-sprint",
+        "assigneeId": null
+      },
+      {
+        "id": "SYN-T5",
+        "name": "Rust service",
+        "description": "Rust service",
+        "type": "Backend",
+        "requiredSkills": [
+          "Rust"
+        ],
+        "minimumLevel": 70,
+        "requirementsConfirmed": true,
+        "estimatedHours": 6,
+        "effort": 3,
+        "complexity": "Medium",
+        "priority": "Medium",
+        "status": "Todo",
+        "sprint": "syn-sprint",
+        "assigneeId": null
+      }
+    ],
+    "sprints": [
+      {
+        "id": "syn-history",
+        "name": "Synthetic accepted history",
+        "start": "2026-09-01",
+        "end": "2026-09-14",
+        "status": "Completed"
+      },
+      {
+        "id": "syn-sprint",
+        "name": "Synthetic test sprint",
+        "start": "2026-10-12",
+        "end": "2026-10-23",
+        "status": "Active"
+      }
+    ],
+    "expected": [
+      {
+        "taskId": "SYN-T1",
+        "expectedWinner": "syn-alex",
+        "expectedBaseline": "syn-sam",
+        "expectedEligible": [
+          "syn-alex",
+          "syn-sam"
+        ],
+        "scenario": "Relevant accepted experience changes winner"
+      },
+      {
+        "taskId": "SYN-T2",
+        "expectedWinner": "syn-sam",
+        "expectedBaseline": "syn-sam",
+        "expectedEligible": [
+          "syn-sam"
+        ],
+        "scenario": "Experience cannot override capacity"
+      },
+      {
+        "taskId": "SYN-T3",
+        "expectedWinner": "syn-jo",
+        "expectedBaseline": "syn-jo",
+        "expectedEligible": [
+          "syn-jo"
+        ],
+        "scenario": "Suitable newcomer remains eligible"
+      },
+      {
+        "taskId": "SYN-T4",
+        "expectedWinner": null,
+        "expectedBaseline": null,
+        "expectedEligible": [],
+        "scenario": "Unknown estimate blocks recommendation"
+      },
+      {
+        "taskId": "SYN-T5",
+        "expectedWinner": null,
+        "expectedBaseline": null,
+        "expectedEligible": [],
+        "scenario": "Missing skills produces no eligible candidate"
+      }
+    ]
+  },
+  "decisions": []
+}

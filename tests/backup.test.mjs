@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {validateBackup} from '../src/lib/backup.js';import {syntheticSet} from '../src/lib/synthetic.js';
+test('synthetic workspace backup passes schema validation',()=>{assert.equal(validateBackup({schemaVersion:3,...syntheticSet(),decisions:[]}).members.length,3);});
+test('malformed references and evaluation expectations reject restore',()=>{const d={schemaVersion:3,...syntheticSet()};d.tasks[0].assigneeId='missing';assert.throws(()=>validateBackup(d));assert.throws(()=>validateBackup({schemaVersion:3,...syntheticSet(),expected:'not array'}));});

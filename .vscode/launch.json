@@ -1,0 +1,1 @@
+{"version":"0.2.0","configurations":[{"name":"Open WorkForce IQ","type":"pwa-chrome","request":"launch","url":"http://localhost:5173","webRoot":"${workspaceFolder}"}]}

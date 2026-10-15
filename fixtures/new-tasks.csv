@@ -1,0 +1,3 @@
+"ID",Name,Category,Description,Hours,Status,RequiredSkills
+demo-api,Build an API endpoint,Backend,Build and test a REST endpoint,8,Todo,Backend
+demo-ui,Build a dashboard,Frontend,Create reusable dashboard components,6,Todo,Frontend

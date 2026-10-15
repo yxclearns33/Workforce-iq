@@ -1,0 +1,6 @@
+TaskID,ExpectedWinner,ExpectedBaseline,ExpectedEligible,Scenario
+SYN-T1,syn-alex,syn-sam,syn-alex;syn-sam,Relevant accepted experience changes winner
+SYN-T2,syn-sam,syn-sam,syn-sam,Experience cannot override capacity
+SYN-T3,syn-jo,syn-jo,syn-jo,Suitable newcomer remains eligible
+SYN-T4,NONE,NONE,,Unknown estimate blocks recommendation
+SYN-T5,NONE,NONE,,Missing skills produces no eligible candidate
